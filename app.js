@@ -3,12 +3,12 @@ const KEY="lifestyle_state",PREV_KEY="dawg_v4_state",OLD_KEY="dawg_v3_state";
 
 // Radar order runs clockwise from the top, matching the Progress layout.
 const CATEGORIES={
-  physical:{name:"Physical",icon:"💪",color:"#2fd08f",desc:"Movement, fitness and taking care of your body",ideas:["Work out for 45 minutes","Go for a 30 minute walk","Stretch for 15 minutes","Hit 10,000 steps"]},
-  social:{name:"Social",icon:"🤝",color:"#3f7bff",desc:"Relationships, communication and community",ideas:["Call or text a friend","Talk to someone new","Spend intentional time with family","Reach out to someone I have not talked to recently"]},
-  discipline:{name:"Discipline",icon:"⚡",color:"#ff4436",desc:"Doing what you said you would do",ideas:["Wake up at my planned time","Less than 2 hours of screen time","Finish my hardest task first","No unnecessary scrolling during work"]},
-  mental:{name:"Mental",icon:"🧠",color:"#e8c41a",desc:"Mindset, reflection and emotional balance",ideas:["Meditate for 10 minutes","Journal for 10 minutes","Write down 3 things I am grateful for","Take 15 minutes away from my phone"]},
-  intellect:{name:"Intellect",icon:"📚",color:"#ff7d22",desc:"Learning, studying and building knowledge",ideas:["Read 20 pages","Study for 2 hours","Learn one new concept","Work on a class or personal project"]},
-  ambition:{name:"Ambition",icon:"🚀",color:"#9257ff",desc:"Goals, career, projects and future growth",ideas:["Work 30 minutes on my biggest goal","Build something for my portfolio","Apply to an opportunity","Plan tomorrow's top 3 priorities"]}
+  physical:{name:"Physical",icon:"💪",color:"#2fd08f",desc:"Movement, fitness and taking care of your body",ideas:["Work out for 45 minutes", "Go for a 30 minute walk", "Stretch for 15 minutes", "Hit 10,000 steps", "Do 50 push-ups", "Run 3 km", "Drink 3 litres of water", "Eat a vegetable with every meal", "No sugary drinks today", "Do a 20 minute yoga session", "Take the stairs everywhere", "Sleep 8 hours", "Do a 5 minute plank challenge", "Cook a healthy meal at home", "Go for a bike ride", "Do 100 squats", "Foam roll for 10 minutes", "Hit my protein target", "Play a sport for 30 minutes", "No junk food today", "Take a cold shower", "Walk after dinner for 15 minutes", "Do a full mobility routine", "Swim for 20 minutes"]},
+  social:{name:"Social",icon:"🤝",color:"#3f7bff",desc:"Relationships, communication and community",ideas:["Call or text a friend", "Talk to someone new", "Spend intentional time with family", "Reach out to someone I have not talked to recently", "Compliment someone sincerely", "Eat a meal with someone, no phones", "Ask a friend how they are really doing", "Thank someone who helped me", "Plan a hangout for this week", "Join a group conversation in class or at work", "Send a voice note to a family member", "Help someone without being asked", "Introduce two people who should know each other", "Listen more than I talk in one conversation", "Message a mentor or teacher", "Say yes to an invitation", "Write a thank-you note", "Call a grandparent or relative", "Check in on a friend who has gone quiet", "Hold eye contact and smile at strangers", "Give someone my full attention for 20 minutes", "Apologise for something I owe an apology for", "Make plans with a new friend", "Volunteer for 30 minutes"]},
+  discipline:{name:"Discipline",icon:"⚡",color:"#ff4436",desc:"Doing what you said you would do",ideas:["Wake up at my planned time", "Less than 2 hours of screen time", "Finish my hardest task first", "No unnecessary scrolling during work", "Make my bed right after waking up", "Phone out of the bedroom tonight", "No social media before noon", "Go to bed by 11 PM", "Keep my room/workspace organized", "Do one thing I have been putting off", "No snoozing the alarm", "Stick to my planned schedule", "Delete one distracting app for the day", "Do the dishes right after eating", "No YouTube Shorts, Reels or TikTok today", "Spend 0 money on things I do not need", "Follow through on one promise I made", "Set out tomorrow's clothes tonight", "Work 90 minutes with my phone in another room", "No complaining for the whole day", "Clear my inbox to zero", "Review my day before bed", "Turn off all non-essential notifications", "Finish what I start today"]},
+  mental:{name:"Mental",icon:"🧠",color:"#e8c41a",desc:"Mindset, reflection and emotional balance",ideas:["Meditate for 10 minutes", "Journal for 10 minutes", "Write down 3 things I am grateful for", "Take 15 minutes away from my phone", "Spend 20 minutes outside in daylight", "Do 5 minutes of deep breathing", "Write down what is stressing me and one next step", "Go for a walk without headphones", "Read something that calms me", "Name one win from today", "Have a no-news day", "Visualise how I want tomorrow to go", "Do a 10 minute body scan", "Listen to music with no distractions", "Write a kind note to myself", "Take a 20 minute nap or rest", "Do a digital detox hour", "Practise saying no to one thing", "Spend 10 minutes in silence", "Write down one worry and let it go", "Stretch and breathe before bed", "Notice and label my emotions 3 times today", "Do something creative for fun", "Reflect on what I learned this week"]},
+  intellect:{name:"Intellect",icon:"📚",color:"#ff7d22",desc:"Learning, studying and building knowledge",ideas:["Read 20 pages", "Study for 2 hours", "Learn one new concept", "Work on a class or personal project", "Watch an educational video and take notes", "Practise a language for 15 minutes", "Do 30 minutes of focused revision", "Write a summary of something I read", "Solve 5 practice problems", "Listen to an educational podcast", "Learn 10 new words", "Teach someone what I learned today", "Read one long-form article", "Do flashcards for 20 minutes", "Take an online lesson", "Research a topic I am curious about", "Practise an instrument for 30 minutes", "Write 300 words about an idea", "Review my notes from this week", "Read the news from two different sources", "Learn a new keyboard shortcut or tool", "Do a puzzle or brain game for 15 minutes", "Ask one good question in class or at work", "Finish one chapter of a book"]},
+  ambition:{name:"Ambition",icon:"🚀",color:"#9257ff",desc:"Goals, career, projects and future growth",ideas:["Work 30 minutes on my biggest goal", "Build something for my portfolio", "Apply to an opportunity", "Plan tomorrow's top 3 priorities", "Write down my 1-year goal and read it", "Update my CV or LinkedIn", "Reach out to someone in my target field", "Spend an hour on my side project", "Set three goals for this week", "Track every expense today", "Save a set amount of money", "Learn one skill that helps my career", "Pitch or share my work with someone", "Read about someone I admire", "Break a big goal into small steps", "Finish one task that moves my career forward", "Research a job or course I want", "Post or publish something I made", "Ask for feedback on my work", "Review progress on my goals", "Practise for an interview", "Write a plan for my next 90 days", "Attend an event or meetup", "Do one thing that scares me professionally"]}
 };
 const CATS=Object.keys(CATEGORIES);
 
@@ -403,11 +403,18 @@ function addGoal(){
   state.goals.push({id:uid(),name,category,xp:Number($("goalXP").value)||10});
   closeGoal();render();toast("Goal added to "+CATEGORIES[category].name+".");
 }
-function showIdeas(){
-  const c=$("goalCategory").value,el=$("ideaList");
-  el.innerHTML=CATEGORIES[c].ideas.map((x,i)=>`<button type="button" data-idea="${i}">${x}<span>＋</span></button>`).join("");
+// Show a few ideas at a time, skipping ones already set as goals; refresh cycles through the rest of the list.
+let ideaSeen=new Set();
+function showIdeas(fresh=false){
+  const c=$("goalCategory").value,el=$("ideaList"),have=new Set(active().map(g=>g.name.toLowerCase()));
+  if(fresh)ideaSeen=new Set();
+  let pool=CATEGORIES[c].ideas.filter(x=>!have.has(x.toLowerCase())&&!ideaSeen.has(x));
+  if(pool.length<4){ideaSeen=new Set(el.querySelectorAll("[data-idea]").length?[...el.querySelectorAll("[data-idea]")].map(b=>b.dataset.idea):[]);pool=CATEGORIES[c].ideas.filter(x=>!have.has(x.toLowerCase())&&!ideaSeen.has(x))}
+  const pick=pool.sort(()=>Math.random()-.5).slice(0,4);pick.forEach(x=>ideaSeen.add(x));
+  el.innerHTML=`<div class="idea-head"><span class="label">IDEAS FOR ${CATEGORIES[c].name.toUpperCase()}</span><button type="button" class="idea-refresh">↻ New ideas</button></div>`+(pick.length?pick.map(x=>`<button type="button" data-idea="${esc(x)}">${esc(x)}<span>＋</span></button>`).join(""):'<div class="empty">You already have every idea for this area. Write your own!</div>');
   el.classList.remove("hidden");
-  el.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{$("goalInput").value=CATEGORIES[c].ideas[Number(b.dataset.idea)];el.classList.add("hidden")}));
+  el.querySelector(".idea-refresh").addEventListener("click",()=>showIdeas());
+  el.querySelectorAll("[data-idea]").forEach(b=>b.addEventListener("click",()=>{$("goalInput").value=b.dataset.idea;el.classList.add("hidden")}));
 }
 function toast(s){const e=$("toast");e.textContent=s;clearTimeout(toast.t);toast.t=setTimeout(()=>e.textContent="",2200)}
 function nav(page){
@@ -429,7 +436,7 @@ $("manageGoals").addEventListener("click",()=>nav("goals"));
 $("addGoalBtn").addEventListener("click",()=>openGoal());$("addGoalBtn2").addEventListener("click",()=>openGoal());
 $("closeGoal").addEventListener("click",closeGoal);$("saveGoal").addEventListener("click",addGoal);
 $("goalInput").addEventListener("keydown",e=>{if(e.key==="Enter")addGoal()});
-$("ideasBtn").addEventListener("click",showIdeas);$("goalCategory").addEventListener("change",()=>$("ideaList").classList.add("hidden"));
+$("ideasBtn").addEventListener("click",()=>showIdeas(true));$("goalCategory").addEventListener("change",()=>{if(!$("ideaList").classList.contains("hidden"))showIdeas(true)});
 
 $("newChallenge").addEventListener("click",()=>{
   $("chCategory").innerHTML=CATS.map(c=>`<option value="${c}">${CATEGORIES[c].icon} ${CATEGORIES[c].name}</option>`).join("");

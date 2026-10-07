@@ -118,3 +118,6 @@
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @media(max-width:560px){.stats{grid-template-columns:repeat(3,1fr)}.stat strong{font-size:22px}.badge-grid{grid-template-columns:repeat(2,1fr)}.cat-tile{padding:13px;gap:10px}.cat-tile strong{font-size:28px}.hex.xl{width:32px;height:37px}}
 @media(prefers-reduced-motion:reduce){.hero-badge,.profile-badge,.rung.current>svg{animation:none}}
+
+.idea-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:2px}
+.idea-list .idea-refresh{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);border-radius:999px;padding:6px 12px;font-size:11px;font-weight:800;transition:background .2s ease,border-color .2s ease}.idea-list .idea-refresh:hover{background:rgba(255,255,255,.1);border-color:var(--line-strong)}.idea-list .idea-refresh:active{transform:scale(.95)}
