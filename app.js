@@ -505,7 +505,7 @@ async function importSteps(){
     const t=txt.trim();
     // Label with nothing after it: the Rounded Number variable was empty, which nearly always means no Health access.
     if(/^LIFE\w*-STEPS\s*:?$/i.test(t)){toast("The shortcut ran but got no step number from Health. Turn on Steps in Settings → Health → Data Access & Devices → Shortcuts, then sync again.",9000);return}
-    toast(t?`Clipboard has "${t.length>40?t.slice(0,40)+"…":t}", which has no step count. In the shortcut, Copy to Clipboard must copy the Rounded Number.`:`Clipboard is empty. Make sure "${shortcutName()}" ends with Copy to Clipboard.`,8000);
+    toast(t?`Clipboard has "${t.length>40?t.slice(0,40)+"…":t}", which has no step count. In the shortcut, Copy to Clipboard must copy the Rounded Number.`:`The shortcut didn't copy a number. Open "${shortcutName()}" in Shortcuts, tap ▶ and check that Round Number shows today's steps.`,8000);
     return;
   }
   applySteps(n);
@@ -577,7 +577,8 @@ setInterval(()=>{if(today()!==lastDay){lastDay=today();mood=null;progWeek=null;r
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&today()!==lastDay){lastDay=today();render()}});
 window.addEventListener("resize",()=>{if($("progress").classList.contains("active"))renderProgress()});
 
-$("runStepShortcut").addEventListener("click",()=>{syncPending(true);location.href="shortcuts://run-shortcut?name="+encodeURIComponent(shortcutName())});
+// Clear the clipboard first so stale text from an earlier run can't be mistaken for this run's result.
+$("runStepShortcut").addEventListener("click",()=>{syncPending(true);try{navigator.clipboard.writeText("").catch(()=>{})}catch(e){}location.href="shortcuts://run-shortcut?name="+encodeURIComponent(shortcutName())});
 $("shortcutName").addEventListener("change",()=>{state.shortcutName=$("shortcutName").value.trim();save();toast("Shortcut name saved: "+shortcutName())});
 $("importSteps").addEventListener("click",importSteps);
 $("stepBannerBtn").addEventListener("click",importSteps);
