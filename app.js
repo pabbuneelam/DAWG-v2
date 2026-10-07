@@ -490,7 +490,11 @@ function renderStepSync(){
   $("stepUrl").textContent=location.origin+location.pathname+"#steps=";
   if(document.activeElement!==$("shortcutName"))$("shortcutName").value=state.shortcutName||"";
 }
-const showStepBanner=()=>$("stepBanner").classList.remove("hidden"),hideStepBanner=()=>$("stepBanner").classList.add("hidden");
+const showStepBanner=(msg="Back from Shortcuts?",btn="Import steps")=>{$("stepBannerText").textContent=msg;$("stepBannerBtn").textContent=btn;$("stepBanner").classList.remove("hidden")},hideStepBanner=()=>$("stepBanner").classList.add("hidden");
+// Once someone has synced before, offer a one-tap update on open when the last sync is over 30 minutes old
+// (a Shortcuts automation keeps the clipboard fresh in the background).
+const STEP_STALE_MS=30*60*1000;let stepPromptSnooze=0;
+const stepsStale=()=>!!state.stepSync&&Date.now()-state.stepSync>STEP_STALE_MS&&Date.now()>stepPromptSnooze;
 // Kept in localStorage with a timestamp: iOS may reload the app while Shortcuts runs, which would wipe sessionStorage.
 function syncPending(set){try{
   if(set){localStorage.setItem("lifestyle_step_pending",String(Date.now()));return true}
@@ -582,12 +586,12 @@ $("runStepShortcut").addEventListener("click",()=>{syncPending(true);try{navigat
 $("shortcutName").addEventListener("change",()=>{state.shortcutName=$("shortcutName").value.trim();save();toast("Shortcut name saved: "+shortcutName())});
 $("importSteps").addEventListener("click",importSteps);
 $("stepBannerBtn").addEventListener("click",importSteps);
-$("stepBannerClose").addEventListener("click",hideStepBanner);
-const checkStepReturn=()=>{if(!document.hidden&&syncPending())showStepBanner()};
+$("stepBannerClose").addEventListener("click",()=>{hideStepBanner();stepPromptSnooze=Date.now()+STEP_STALE_MS});
+const checkStepReturn=()=>{if(document.hidden)return;if(syncPending())showStepBanner();else if(stepsStale()&&$("stepBanner").classList.contains("hidden"))showStepBanner("Update today's steps from Health?","Update steps")};
 document.addEventListener("visibilitychange",checkStepReturn);window.addEventListener("pageshow",checkStepReturn);window.addEventListener("focus",checkStepReturn);
 window.addEventListener("hashchange",readStepHash);
 
-updateTimer();render();readStepHash();if(syncPending())showStepBanner();
+updateTimer();render();readStepHash();checkStepReturn();
 // Check for a new version on every launch and resume; reload once it takes over, but never while someone is typing.
 if("serviceWorker"in navigator){
   const hadController=!!navigator.serviceWorker.controller;let pendingReload=false,reloaded=false;
