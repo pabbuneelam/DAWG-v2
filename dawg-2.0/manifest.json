@@ -1,9 +1,0 @@
-{
-  "name":"DAWG — Discipline & Goals",
-  "short_name":"DAWG",
-  "start_url":"./",
-  "display":"standalone",
-  "background_color":"#09090b",
-  "theme_color":"#09090b",
-  "description":"A personal daily habit, discipline and goal tracker."
-}
