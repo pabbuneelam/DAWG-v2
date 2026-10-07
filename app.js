@@ -503,7 +503,7 @@ async function importSteps(){
   const n=parseStepText(txt);
   if(n===null){
     const t=txt.trim();
-    toast(t?`Clipboard has "${t.length>40?t.slice(0,40)+"…":t}", which has no step count. Check the shortcut's Text action.`:`Clipboard is empty. Make sure "${shortcutName()}" ends with Copy to Clipboard.`,8000);
+    toast(t?`Clipboard has "${t.length>40?t.slice(0,40)+"…":t}", which has no step count. In the shortcut, Copy to Clipboard must copy the Rounded Number.`:`Clipboard is empty. Make sure "${shortcutName()}" ends with Copy to Clipboard.`,8000);
     return;
   }
   applySteps(n);
