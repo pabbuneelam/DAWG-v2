@@ -1,4 +1,4 @@
-# DAWG 2.0
+# LIFESTYLE
 
 Standalone mobile-friendly progressive web app (PWA).
 
