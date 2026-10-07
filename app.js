@@ -420,23 +420,23 @@ function estimateDifficulty(text){
   return EASY_RE.test(t)?1:MEDIUM_RE.test(t)?2:2;
 }
 const DIFF=["","Easy","Medium","Hard"],xpForDiff=d=>d*10;
-let diffManual=false;
 function autoDifficulty(){
-  if(diffManual)return;
   const v=$("goalInput").value.trim();
-  $("goalXP").value=String(xpForDiff(v?estimateDifficulty(v):1));
+  const d=v?estimateDifficulty(v):0;
+  $("goalDiff").className="diff-display"+(d?" d"+d:"");
+  $("goalDiff").textContent=d?`${DIFF[d]} · +${xpForDiff(d)} XP`:"Set automatically from your goal";
 }
 function openGoal(category){
   $("goalModal").classList.remove("hidden");
   $("goalCategory").innerHTML=CATS.map(c=>`<option value="${c}">${CATEGORIES[c].icon} ${CATEGORIES[c].name}</option>`).join("");
   if(category)$("goalCategory").value=category;
-  $("goalInput").value="";$("goalXP").value="10";diffManual=false;$("diffMode").textContent="· auto";$("ideaList").classList.add("hidden");$("goalInput").focus();
+  $("goalInput").value="";autoDifficulty();$("ideaList").classList.add("hidden");$("goalInput").focus();
 }
 function closeGoal(){$("goalModal").classList.add("hidden")}
 function addGoal(){
   const name=$("goalInput").value.trim(),category=$("goalCategory").value;
   if(!name){toast("Enter a goal first.");return}
-  state.goals.push({id:uid(),name,category,xp:Number($("goalXP").value)||10});
+  state.goals.push({id:uid(),name,category,xp:xpForDiff(estimateDifficulty(name))});
   closeGoal();render();toast("Goal added to "+CATEGORIES[category].name+".");
 }
 // Show a few ideas at a time, skipping ones already set as goals; refresh cycles through the rest of the list.
@@ -473,7 +473,6 @@ $("addGoalBtn").addEventListener("click",()=>openGoal());$("addGoalBtn2").addEve
 $("closeGoal").addEventListener("click",closeGoal);$("saveGoal").addEventListener("click",addGoal);
 $("goalInput").addEventListener("keydown",e=>{if(e.key==="Enter")addGoal()});
 $("goalInput").addEventListener("input",autoDifficulty);
-$("goalXP").addEventListener("change",()=>{diffManual=true;$("diffMode").textContent="· set by you"});
 $("ideasBtn").addEventListener("click",()=>showIdeas(true));$("goalCategory").addEventListener("change",()=>{if(!$("ideaList").classList.contains("hidden"))showIdeas(true)});
 
 $("newChallenge").addEventListener("click",()=>{
