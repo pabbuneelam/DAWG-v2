@@ -325,7 +325,12 @@ function renderMetrics(){
       <div class="stepper"><button type="button" data-k="${x.key}" data-d="-1">−</button><input type="number" inputmode="decimal" min="0" step="${x.step}" data-k="${x.key}" value="${m[x.key]??""}" placeholder="0"><button type="button" data-k="${x.key}" data-d="1">＋</button></div>
       <div class="spark">${vals.map((v,i)=>`<i style="height:${Math.max(4,v/max*100)}%" class="${i===6?"now":""}" title="${v}"></i>`).join("")}</div></div>`;
   }).join("");
-  const setM=(k,v)=>{(state.metrics[t]||(state.metrics[t]={}))[k]=Math.max(0,Math.round(v*10)/10);save()};
+  const setM=(k,v)=>{
+    const val=(state.metrics[t]||(state.metrics[t]={}))[k]=Math.max(0,Math.round(v*10)/10);save();
+    if(k!=="steps")return;
+    const{done,undone}=updateStepGoals(val);
+    if(done.length||undone.length){render();toast(done.length?`${done.map(g=>g.name).join(", ")} ✓ +${done.reduce((n,g)=>n+g.xp,0)} XP`:`${undone.map(g=>g.name).join(", ")} unchecked`)}
+  };
   $("metrics").querySelectorAll("button[data-d]").forEach(b=>b.addEventListener("click",()=>{const x=METRICS.find(y=>y.key===b.dataset.k);setM(x.key,(Number(state.metrics[t]?.[x.key])||0)+x.step*Number(b.dataset.d));renderMetrics()}));
   $("metrics").querySelectorAll("input").forEach(i=>i.addEventListener("change",()=>{setM(i.dataset.k,Number(i.value)||0);renderMetrics()}));
 }
@@ -478,11 +483,19 @@ function parseStepText(s){
   return nums.length===1?nums[0].v:Math.max(...nums.map(x=>x.v));
 }
 function stepTarget(name){const m=name.toLowerCase().replace(/(\d),(\d)/g,"$1$2").match(/(\d+(?:\.\d+)?)\s*(k)?\s*steps/);return m?Number(m[1])*(m[2]?1000:1):null}
+// Tick step goals whose target is met; untick only ones we ticked automatically if steps drop back below target.
+function updateStepGoals(n){
+  const t=today(),arr=state.log[t]||(state.log[t]=[]),auto=(state.autoStep||(state.autoStep={}))[t]||(state.autoStep[t]=[]);
+  const done=active().filter(g=>{const x=stepTarget(g.name);return x&&n>=x&&!arr.includes(g.id)});
+  const undone=active().filter(g=>{const x=stepTarget(g.name);return x&&n<x&&auto.includes(g.id)&&arr.includes(g.id)});
+  done.forEach(g=>{arr.push(g.id);auto.push(g.id);gainXP(g.xp)});
+  undone.forEach(g=>{state.log[t]=state.log[t].filter(id=>id!==g.id);state.autoStep[t]=state.autoStep[t].filter(id=>id!==g.id);gainXP(-g.xp)});
+  return{done,undone};
+}
 function applySteps(n){
   const t=today();(state.metrics[t]||(state.metrics[t]={})).steps=n;state.stepSync=Date.now();
-  const arr=state.log[t]||(state.log[t]=[]),hits=active().filter(g=>{const x=stepTarget(g.name);return x&&n>=x&&!arr.includes(g.id)});
-  hits.forEach(g=>{arr.push(g.id);gainXP(g.xp)});
-  render();toast(`Synced ${n.toLocaleString()} steps`+(hits.length?` · ${hits.length} step goal${hits.length===1?"":"s"} done`:""));
+  const{done}=updateStepGoals(n);
+  render();toast(`Synced ${n.toLocaleString()} steps`+(done.length?` · ${done.length} step goal${done.length===1?"":"s"} done`:""));
 }
 function renderStepSync(){
   const at=state.stepSync,el=$("stepSyncStatus");
