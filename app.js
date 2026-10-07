@@ -263,7 +263,7 @@ function tickCountdowns(){
 
 function renderProgress(){
   const li=levelInfo(),r=rankAt(li.level),scores=CATS.map(statScore);
-  drawRadar(scores,ovr());
+  drawRadar(scores);$("ovrBig").textContent=ovr();
   // Tiles in pairs, same order as the reference layout.
   const order=["social","physical","intellect","discipline","mental","ambition"];
   $("categoryStats").innerHTML=order.map(c=>`<div class="cat-tile" style="--c:${CATEGORIES[c].color}">${hex(CATEGORIES[c].color,"xl")}<div><strong>${statScore(c)}</strong><small>${CATEGORIES[c].name}</small></div></div>`).join("");
@@ -284,7 +284,7 @@ function renderProgress(){
   $("daysDone").textContent=hist.filter(x=>x.completed).length;
   $("avgScore").textContent=(hist.length?Math.round(hist.reduce((a,x)=>a+(x.score||0),0)/hist.length):0)+"%";
 }
-function drawRadar(values,overall){
+function drawRadar(values){
   const canvas=$("radar"),ctx=canvas.getContext("2d"),dpr=window.devicePixelRatio||1,size=320;
   canvas.width=size*dpr;canvas.height=size*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,size,size);
   const cx=160,cy=160,r=100,n=6,pt=(i,f)=>{const a=-Math.PI/2+i*2*Math.PI/n;return[cx+Math.cos(a)*r*f,cy+Math.sin(a)*r*f]};
@@ -296,8 +296,6 @@ function drawRadar(values,overall){
   ctx.save();ctx.shadowColor="rgba(255,255,255,.85)";ctx.shadowBlur=16;ctx.lineWidth=2.5;ctx.strokeStyle="#fff";ctx.stroke();ctx.restore();
   ctx.textAlign="center";ctx.font="600 12px system-ui";
   CATS.forEach((c,i)=>{const[x,y]=pt(i,1.24);ctx.fillStyle=CATEGORIES[c].color;ctx.fillText(CATEGORIES[c].name,x,y+4)});
-  ctx.save();ctx.shadowColor="rgba(0,0,0,.6)";ctx.shadowBlur=10;ctx.fillStyle="#fff";ctx.font="800 54px system-ui";ctx.fillText(String(overall),cx,cy+14);ctx.restore();
-  ctx.fillStyle="rgba(255,255,255,.8)";ctx.font="600 10px ui-monospace,Menlo,monospace";ctx.fillText("OVR RATING",cx,cy+32);
 }
 
 /* ---------- lab ---------- */
