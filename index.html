@@ -141,6 +141,25 @@
     <section class="panel"><div class="section-head"><div><span class="label">DAILY TRACKER</span><h2>Body &amp; fuel</h2></div><span class="pill">Today</span></div>
       <div id="metrics" class="metrics"></div>
     </section>
+    <section class="panel health-card">
+      <div class="section-head"><div><span class="label">APPLE HEALTH</span><h2>Step sync</h2></div><span id="stepSyncStatus" class="pill">Not synced</span></div>
+      <p class="muted intro">Bring today's step count in from Apple Health with a one-time iPhone Shortcut. Step goals like "Hit 10,000 steps" tick themselves when you reach them.</p>
+      <div class="health-actions"><button id="runStepShortcut" class="primary" type="button">Sync steps</button><button id="importSteps" class="ghost" type="button">Import copied steps</button></div>
+      <details class="setup-guide">
+        <summary>Set up the Shortcut (one time, about 2 minutes)</summary>
+        <ol>
+          <li>Open the <b>Shortcuts</b> app, tap <b>＋</b>, and name the new shortcut exactly <b>LIFESTYLE Steps</b>.</li>
+          <li>Add <b>Find Health Samples</b>. Set the type to <b>Steps</b>, add the filter <b>Start Date is Today</b>, and set <b>Group By</b> to <b>Day</b>.</li>
+          <li>Add <b>Calculate Statistics</b> and choose <b>Sum</b>.</li>
+          <li>Add <b>Round Number</b> (Ones Place).</li>
+          <li>Add <b>Text</b> and type <code>LIFESTYLE-STEPS</code>, a space, then insert the <b>Rounded Number</b> variable.</li>
+          <li>Add <b>Copy to Clipboard</b>.</li>
+          <li>Run it once and tap <b>Allow</b> when it asks for Health access.</li>
+        </ol>
+        <p><b>Daily use:</b> tap <b>Sync steps</b>, let the shortcut run, come back here and tap <b>Import steps</b>. Your iPhone will ask to allow pasting.</p>
+        <p><b>Using LIFESTYLE in a browser instead of the home screen?</b> Replace the last step with <b>Open URLs</b> pointing to <code id="stepUrl"></code><b>Rounded Number</b> and the steps arrive automatically.</p>
+      </details>
+    </section>
   </section>
 
   <section id="todoTab" class="lab-tab">
@@ -205,6 +224,7 @@
   </div>
 </div>
 
+<div id="stepBanner" class="step-banner hidden" role="status"><span>Back from Shortcuts?</span><button id="stepBannerBtn" class="primary" type="button">Import steps</button><button id="stepBannerClose" class="ghost" type="button" aria-label="Dismiss">✕</button></div>
 <div id="toast" class="toast fixed-toast" aria-live="polite"></div>
 </main>
 <script src="app.js"></script>

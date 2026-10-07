@@ -304,7 +304,7 @@ function renderLab(){
   document.querySelectorAll(".seg").forEach(b=>b.classList.toggle("active",b.dataset.lab===labTab));
   document.querySelectorAll(".lab-tab").forEach(x=>x.classList.toggle("active",x.id===labTab));
   const f=state.focus[today()]||0;$("focusCount").textContent=f?`${f} session${f===1?"":"s"} finished today`:"";
-  renderJournal();renderMetrics();renderTodos();
+  renderJournal();renderMetrics();renderTodos();renderStepSync();
 }
 function updateTimer(){const s=Math.max(0,Math.round(timerLeft));$("timer").textContent=pad(Math.floor(s/60))+":"+pad(s%60)}
 function stopTimer(){clearInterval(timerId);timerId=null;timerEnd=null}
@@ -461,6 +461,40 @@ function nav(page){
   window.scrollTo({top:0,behavior:"instant"});
 }
 
+/* ---------- Apple Health steps (via iOS Shortcut) ---------- */
+// Home-screen web apps can't read Health, so a Shortcut copies "LIFESTYLE-STEPS 8432" (or opens #steps=8432) and we pick it up here.
+const SHORTCUT_NAME="LIFESTYLE Steps";
+function parseStepText(s){
+  s=String(s||"");const m=s.match(/LIFESTYLE-STEPS\s*[:=]?\s*([\d.,]+)/i)||s.trim().match(/^([\d.,]+)$/);if(!m)return null;
+  const n=Math.round(Number(m[1].replace(/,/g,"")));return Number.isFinite(n)&&n>=0&&n<=200000?n:null;
+}
+function stepTarget(name){const m=name.toLowerCase().replace(/(\d),(\d)/g,"$1$2").match(/(\d+(?:\.\d+)?)\s*(k)?\s*steps/);return m?Number(m[1])*(m[2]?1000:1):null}
+function applySteps(n){
+  const t=today();(state.metrics[t]||(state.metrics[t]={})).steps=n;state.stepSync=Date.now();
+  const arr=state.log[t]||(state.log[t]=[]),hits=active().filter(g=>{const x=stepTarget(g.name);return x&&n>=x&&!arr.includes(g.id)});
+  hits.forEach(g=>{arr.push(g.id);gainXP(g.xp)});
+  render();toast(`Synced ${n.toLocaleString()} steps`+(hits.length?` · ${hits.length} step goal${hits.length===1?"":"s"} done`:""));
+}
+function renderStepSync(){
+  const at=state.stepSync,el=$("stepSyncStatus");
+  el.textContent=at?"Synced "+(ds(new Date(at))===today()?new Date(at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):fmtDate(ds(new Date(at)),{month:"short",day:"numeric"})):"Not synced";
+  $("stepUrl").textContent=location.origin+location.pathname+"#steps=";
+}
+const showStepBanner=()=>$("stepBanner").classList.remove("hidden"),hideStepBanner=()=>$("stepBanner").classList.add("hidden");
+function syncPending(set){try{if(set===undefined){const v=sessionStorage.getItem("stepSyncPending");sessionStorage.removeItem("stepSyncPending");return!!v}sessionStorage.setItem("stepSyncPending","1")}catch(e){return false}}
+async function importSteps(){
+  hideStepBanner();
+  let txt="";try{txt=await navigator.clipboard.readText()}catch(e){toast("Couldn't read the clipboard. Allow pasting and try again.");return}
+  const n=parseStepText(txt);
+  if(n===null){toast("No step count found. Run the LIFESTYLE Steps shortcut first.");return}
+  applySteps(n);
+}
+function readStepHash(){
+  const m=location.hash.match(/steps=([\d.,]+)/);if(!m)return;
+  history.replaceState(null,"",location.pathname+location.search);
+  const n=parseStepText(m[1]);if(n!==null)applySteps(n);
+}
+
 /* ---------- wiring ---------- */
 document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.page)));
 document.querySelectorAll("[data-back]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.back)));
@@ -522,7 +556,14 @@ setInterval(()=>{if(today()!==lastDay){lastDay=today();mood=null;progWeek=null;r
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&today()!==lastDay){lastDay=today();render()}});
 window.addEventListener("resize",()=>{if($("progress").classList.contains("active"))renderProgress()});
 
-updateTimer();render();
+$("runStepShortcut").addEventListener("click",()=>{syncPending(true);location.href="shortcuts://run-shortcut?name="+encodeURIComponent(SHORTCUT_NAME)});
+$("importSteps").addEventListener("click",importSteps);
+$("stepBannerBtn").addEventListener("click",importSteps);
+$("stepBannerClose").addEventListener("click",hideStepBanner);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&syncPending())showStepBanner()});
+window.addEventListener("hashchange",readStepHash);
+
+updateTimer();render();readStepHash();if(syncPending())showStepBanner();
 // Check for a new version on every launch and resume; reload once it takes over, but never while someone is typing.
 if("serviceWorker"in navigator){
   const hadController=!!navigator.serviceWorker.controller;let pendingReload=false,reloaded=false;
