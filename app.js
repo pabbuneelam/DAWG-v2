@@ -481,5 +481,14 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&today()!=
 window.addEventListener("resize",()=>{if($("progress").classList.contains("active"))renderProgress()});
 
 updateTimer();render();
-if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+// Check for a new version on every launch and resume; reload once it takes over, but never while someone is typing.
+if("serviceWorker"in navigator){
+  const hadController=!!navigator.serviceWorker.controller;let pendingReload=false,reloaded=false;
+  const reload=()=>{if(reloaded)return;if(document.activeElement?.matches("input,textarea")){pendingReload=true;return}reloaded=true;location.reload()};
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(hadController)reload()});
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
+    reg.update().catch(()=>{});
+    document.addEventListener("visibilitychange",()=>{if(document.hidden)return;if(pendingReload)reload();else reg.update().catch(()=>{})});
+  }).catch(()=>{});
+}
 })();
