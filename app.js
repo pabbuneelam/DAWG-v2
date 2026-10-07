@@ -85,7 +85,8 @@ function load(){
   return fresh();
 }
 let state=load(),labTab="focusTab",progWeek=null,mood=null;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Could not save on this device.")}}
+const hooks={save:[],reset:[]};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Could not save on this device.")}hooks.save.forEach(f=>{try{f(state)}catch(e){}})}
 
 /* ---------- derived data ---------- */
 const active=()=>state.goals.filter(g=>!g.archived);
@@ -586,7 +587,7 @@ $("exportBtn").addEventListener("click",()=>{
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:"application/json"}));
   a.download=`lifestyle-backup-${today()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 });
-$("resetBtn").addEventListener("click",()=>{if(confirm("Reset all LIFESTYLE progress, goals and journal entries?")){state=fresh();progWeek=null;mood=null;render();nav("home");toast("System reset.")}});
+$("resetBtn").addEventListener("click",()=>{if(confirm("Reset all LIFESTYLE progress, goals and journal entries?")){state=fresh();progWeek=null;mood=null;hooks.reset.forEach(f=>{try{f()}catch(e){}});render();nav("home");toast("System reset.")}});
 
 // Roll over at midnight while the app is open, and keep countdowns live.
 let lastDay=today();
@@ -603,6 +604,13 @@ $("stepBannerClose").addEventListener("click",()=>{hideStepBanner();stepPromptSn
 const checkStepReturn=()=>{if(document.hidden)return;if(syncPending())showStepBanner();else if(stepsStale()&&$("stepBanner").classList.contains("hidden"))showStepBanner("Update today's steps from Health?","Update steps")};
 document.addEventListener("visibilitychange",checkStepReturn);window.addEventListener("pageshow",checkStepReturn);window.addEventListener("focus",checkStepReturn);
 window.addEventListener("hashchange",readStepHash);
+
+// Bridge for cloud.js (optional account sync), which lives outside this closure.
+window.LIFESTYLE={
+  getState:()=>state,fresh,toast,
+  setState(s){state={...fresh(),...s};progWeek=null;mood=null;render()},
+  onSave:f=>hooks.save.push(f),onReset:f=>hooks.reset.push(f)
+};
 
 updateTimer();render();readStepHash();checkStepReturn();
 // Check for a new version on every launch and resume; reload once it takes over, but never while someone is typing.

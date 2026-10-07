@@ -1,5 +1,7 @@
-const CACHE="lifestyle-v2";const ASSETS=["./","./index.html","./style.css","./app.js","./manifest.json"];
+const CACHE="lifestyle-v3";const ASSETS=["./","./index.html","./style.css","./app.js","./manifest.json","./cloud.js"];
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(u=>new Request(u,{cache:"reload"})))).then(()=>self.skipWaiting())));
 self.addEventListener("activate",e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+// Versioned Firebase SDK files never change, so serve them cache-first for offline use.
+self.addEventListener("fetch",e=>{const r=e.request;if(r.method==="GET"&&r.url.startsWith("https://www.gstatic.com/firebasejs/")){e.respondWith(caches.open(CACHE).then(c=>c.match(r).then(hit=>hit||fetch(r).then(res=>{if(res.ok)c.put(r,res.clone());return res}))));return}});
 // Network first so every launch gets the latest deploy; the cache is only an offline / slow-network fallback.
 self.addEventListener("fetch",e=>{const r=e.request;if(r.method!=="GET"||new URL(r.url).origin!==location.origin)return;e.respondWith((async()=>{const cache=await caches.open(CACHE);const net=fetch(r,{cache:"no-cache"}).then(res=>{if(res.ok)cache.put(r,res.clone());return res});net.catch(()=>{});try{return await Promise.race([net,new Promise((_,no)=>setTimeout(no,4000))])}catch(err){const hit=await cache.match(r,{ignoreSearch:true})||(r.mode==="navigate"?await cache.match("./"):null);return hit||net}})())});

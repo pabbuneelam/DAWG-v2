@@ -186,12 +186,33 @@
     <div id="achievements" class="badge-grid"></div>
   </section>
 
+  <section id="accountCard" class="panel account-card">
+    <div class="section-head"><div><span class="label">ACCOUNT</span><h2 id="acctTitle">Back up your progress</h2></div><span id="syncStatus" class="pill">Not signed in</span></div>
+    <div id="acctSignedOut">
+      <p class="muted intro">Sign in to back up your goals, streaks, journal and steps and keep them in sync across your devices. It's optional; LIFESTYLE works without an account.</p>
+      <button id="googleSignIn" class="primary wide" type="button">Continue with Google</button>
+      <div class="or-line"><span>or use email</span></div>
+      <form id="emailForm" novalidate>
+        <label class="field"><span>Email</span><input id="acctEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"></label>
+        <label class="field"><span>Password</span><input id="acctPassword" type="password" autocomplete="current-password" minlength="6"></label>
+        <div class="acct-actions"><button id="emailSignIn" class="primary" type="submit">Sign in</button><button id="emailSignUp" class="ghost" type="button">Create account</button></div>
+      </form>
+      <button id="forgotPassword" class="link-btn" type="button">Forgot password?</button>
+    </div>
+    <div id="acctSignedIn" class="hidden">
+      <p class="muted intro">Signed in as <b id="acctWho"></b>. Your progress backs up automatically whenever it changes.</p>
+      <div class="acct-actions"><button id="syncNow" class="ghost" type="button">Sync now</button><button id="signOutBtn" class="ghost" type="button">Sign out</button></div>
+      <button id="deleteAccount" class="ghost wide danger" type="button">Delete account</button>
+    </div>
+    <p class="tiny">Stored securely with Google Firebase. <a href="privacy.html">Privacy</a></p>
+  </section>
+
   <section class="panel settings">
     <div class="section-head"><div><span class="label">SETTINGS</span><h2>Your data</h2></div></div>
     <button id="manageGoals" class="ghost wide" type="button">Manage goals</button>
     <button id="exportBtn" class="ghost wide" type="button">Export backup</button>
     <button id="resetBtn" class="ghost wide danger" type="button">Reset everything</button>
-    <p class="tiny">Everything is stored on this device only.</p>
+    <p class="tiny">Without an account, everything stays on this device only.</p>
   </section>
 </section>
 
@@ -230,5 +251,6 @@
 <div id="toast" class="toast fixed-toast" aria-live="polite"></div>
 </main>
 <script src="app.js"></script>
+<script type="module" src="cloud.js"></script>
 </body>
 </html>
