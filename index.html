@@ -20,15 +20,15 @@
 
 <section id="home" class="page active">
   <section class="stats">
-    <article class="stat main-stat"><span class="label">LEVEL</span><strong id="level">1</strong><span id="rank" class="muted">Rookie</span><div class="progress"><i id="xpBar"></i></div><span id="xpText" class="tiny">0 / 100 XP</span></article>
+    <article class="stat main-stat"><span class="label">LEVEL</span><strong id="level">1</strong><span id="rank" class="muted">Initiate</span><div class="progress"><i id="xpBar"></i></div><span id="xpText" class="tiny">0 / 100 XP</span></article>
     <article class="stat"><span class="label">STREAK</span><strong id="streak">0 🔥</strong><span class="muted">days</span></article>
     <article class="stat"><span class="label">TODAY</span><strong id="today">0/0</strong><span class="muted">complete</span></article>
   </section>
 
   <section class="panel">
-    <div class="section-head"><div><span class="label">TODAY</span><h2>Your habits</h2></div><span id="scoreMini" class="pill">0%</span></div>
+    <div class="section-head"><div><span class="label">TODAY</span><h2>Your goals</h2></div><span id="scoreMini" class="pill">0%</span></div>
     <div id="habitList"></div>
-    <form id="habitForm" class="add-form"><input id="habitInput" maxlength="60" placeholder="Add a habit..." autocomplete="off"><button class="primary" type="submit">Add</button></form>
+    <button id="addGoalBtn" class="add-goal" type="button">＋ Add a goal</button>
   </section>
 
   <section class="panel score-panel">
@@ -40,61 +40,79 @@
     <div class="section-head"><div><span class="label">RECENT</span><h2>Last 7 days</h2></div></div>
     <div id="history" class="history"></div>
   </section>
-
   <button id="completeDay" class="complete" type="button">COMPLETE DAY</button>
 </section>
 
-<section id="habits" class="page">
+<section id="goals" class="page">
   <section class="panel">
-    <div class="section-head"><div><span class="label">HABIT BUILDER</span><h2>Manage habits</h2></div></div>
-    <p class="muted intro">Create habits that earn XP every time you complete them.</p>
-    <div id="manageHabits"></div>
+    <div class="section-head"><div><span class="label">GOAL BUILDER</span><h2>Your six areas</h2></div></div>
+    <p class="muted intro">Every area needs at least one goal. Add as many goals as you want after setup.</p>
+    <div id="categoryManager"></div>
+    <button id="addGoalBtn2" class="primary wide" type="button">＋ Add another goal</button>
   </section>
 </section>
 
 <section id="progress" class="page">
+  <section class="panel rank-card">
+    <div class="section-head"><div><span class="label">RANK PROGRESSION</span><h2 id="progressRank">Initiate</h2></div><span id="progressLevel" class="pill">LVL 1</span></div>
+    <div class="rank-track" id="rankTrack"></div>
+    <div class="rank-progress"><div class="rank-line"><i id="rankBar"></i></div><div class="rank-copy"><span id="rankNow">Initiate</span><span id="rankNext">Rising</span></div></div>
+  </section>
+
+  <section class="panel evolution-card">
+    <div class="section-head"><div><span class="label">LIFE EVOLUTION</span><h2>Level up every area</h2></div></div>
+    <div class="radar-wrap"><canvas id="radar" width="320" height="320" aria-label="Life stats radar chart"></canvas></div>
+    <div id="categoryStats" class="category-stats"></div>
+  </section>
+
   <section class="panel">
-    <div class="section-head"><div><span class="label">PROGRESSION</span><h2>Your DAWG stats</h2></div></div>
+    <div class="section-head"><div><span class="label">MILESTONES</span><h2>Achievements</h2></div></div>
     <div class="big-stat-grid">
       <div><span class="label">TOTAL XP</span><strong id="totalXP">0</strong></div>
       <div><span class="label">BEST STREAK</span><strong id="bestStreak">0 🔥</strong></div>
       <div><span class="label">DAYS DONE</span><strong id="daysDone">0</strong></div>
       <div><span class="label">AVG SCORE</span><strong id="avgScore">0%</strong></div>
     </div>
-  </section>
-  <section class="panel">
-    <div class="section-head"><div><span class="label">ACHIEVEMENTS</span><h2>Milestones</h2></div></div>
     <div id="achievements" class="achievements"></div>
   </section>
 </section>
 
 <section id="focus" class="page">
-  <section class="panel focus">
-    <span class="label">FOCUS MODE</span>
-    <h2>One task. No excuses.</h2>
-    <div id="timer" class="timer">25:00</div>
-    <div class="timer-actions"><button id="startTimer" class="primary" type="button">Start</button><button id="resetTimer" class="ghost" type="button">Reset</button></div>
-    <p class="muted">A simple 25-minute focus session. Stay on the task until the timer ends.</p>
-  </section>
+  <section class="panel focus"><span class="label">FOCUS MODE</span><h2>One task. No excuses.</h2><div id="timer" class="timer">25:00</div><div class="timer-actions"><button id="startTimer" class="primary" type="button">Start</button><button id="resetTimer" class="ghost" type="button">Reset</button></div><p class="muted">A simple 25-minute focus session. Stay on the task until the timer ends.</p></section>
 </section>
 
 <section id="journal" class="page">
-  <section class="panel">
-    <div class="section-head"><div><span class="label">JOURNAL</span><h2>Daily reflection</h2></div></div>
-    <textarea id="journalText" placeholder="What went well today? What will you do better tomorrow?"></textarea>
-    <button id="saveJournal" class="primary wide" type="button">Save reflection</button>
-    <div id="journalSaved" class="toast"></div>
-  </section>
+  <section class="panel"><div class="section-head"><div><span class="label">JOURNAL</span><h2>Daily reflection</h2></div></div><textarea id="journalText" placeholder="What went well today? What will you do better tomorrow?"></textarea><button id="saveJournal" class="primary wide" type="button">Save reflection</button><div id="journalSaved" class="toast"></div></section>
 </section>
 
 <nav class="nav" aria-label="Main navigation">
   <button class="nav-btn active" data-page="home" type="button"><b>⌂</b><span>Home</span></button>
-  <button class="nav-btn" data-page="habits" type="button"><b>✓</b><span>Habits</span></button>
-  <button class="nav-btn" data-page="progress" type="button"><b>★</b><span>Progress</span></button>
+  <button class="nav-btn" data-page="goals" type="button"><b>✓</b><span>Goals</span></button>
+  <button class="nav-btn" data-page="progress" type="button"><b>★</b><span>Evolution</span></button>
   <button class="nav-btn" data-page="focus" type="button"><b>◷</b><span>Focus</span></button>
   <button class="nav-btn" data-page="journal" type="button"><b>✎</b><span>Journal</span></button>
 </nav>
-<div id="toast" class="toast" aria-live="polite"></div>
+
+<div id="setupModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head"><div><span class="label">DAWG SETUP</span><h2>Build your six areas</h2></div><span id="setupCount" class="pill">0 / 6</span></div>
+    <p class="muted">Add at least one goal under every area. You can use one of our ideas or write your own.</p>
+    <div id="setupCategories" class="setup-categories"></div>
+    <button id="finishSetup" class="primary wide" type="button">Finish setup</button>
+  </div>
+</div>
+
+<div id="goalModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head"><div><span class="label">NEW GOAL</span><h2>Add a goal</h2></div><button id="closeGoal" class="ghost" type="button">Close</button></div>
+    <label class="field"><span>Area</span><select id="goalCategory"></select></label>
+    <label class="field"><span>Your goal</span><input id="goalInput" maxlength="80" placeholder="e.g. Read for 20 minutes" autocomplete="off"></label>
+    <button id="ideasBtn" class="idea-button" type="button">💡 Need ideas?</button>
+    <div id="ideaList" class="idea-list hidden"></div>
+    <button id="saveGoal" class="primary wide" type="button">Add goal</button>
+  </div>
+</div>
+<div id="toast" class="toast fixed-toast" aria-live="polite"></div>
 </main>
 <script src="app.js"></script>
 </body>
