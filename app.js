@@ -450,7 +450,7 @@ function showIdeas(fresh=false){
   el.querySelector(".idea-refresh").addEventListener("click",()=>showIdeas());
   el.querySelectorAll("[data-idea]").forEach(b=>b.addEventListener("click",()=>{$("goalInput").value=b.dataset.idea;autoDifficulty();el.classList.add("hidden")}));
 }
-function toast(s){const e=$("toast");e.textContent=s;clearTimeout(toast.t);toast.t=setTimeout(()=>e.textContent="",2200)}
+function toast(s,ms=2200){const e=$("toast");e.textContent=s;clearTimeout(toast.t);toast.t=setTimeout(()=>e.textContent="",ms)}
 function nav(page){
   document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id===page));
   document.querySelectorAll(".nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
@@ -464,9 +464,18 @@ function nav(page){
 /* ---------- Apple Health steps (via iOS Shortcut) ---------- */
 // Home-screen web apps can't read Health, so a Shortcut copies "LIFESTYLE-STEPS 8432" (or opens #steps=8432) and we pick it up here.
 const DEFAULT_SHORTCUT="LIFESTYLE Steps",shortcutName=()=>(state.shortcutName||"").trim()||DEFAULT_SHORTCUT;
+// Accepts "LIFESTYLE-STEPS 8432", "8,432 steps", "8 432", "8.432" (European), "8432.0" or a bare number.
 function parseStepText(s){
-  s=String(s||"");const m=s.match(/LIFESTYLE-STEPS\s*[:=]?\s*([\d.,]+)/i)||s.trim().match(/^([\d.,]+)$/);if(!m)return null;
-  const n=Math.round(Number(m[1].replace(/,/g,"")));return Number.isFinite(n)&&n>=0&&n<=200000?n:null;
+  s=String(s||"").replace(/[\u00a0\u202f]/g," ");
+  const nums=[...s.matchAll(/\d{1,3}(?:[ ,.']\d{3})+(?:[.,]\d+)?(?!\d)|\d+(?:[.,]\d+)?/g)].map(m=>{
+    const raw=m[0],grouped=/^\d{1,3}(?:[ ,.']\d{3})+/.exec(raw)?.[0];
+    const v=grouped?Number(grouped.replace(/[ ,.']/g,"")):Number(raw.replace(",","."));
+    return{v:Math.round(v),i:m.index,end:m.index+raw.length};
+  }).filter(x=>Number.isFinite(x.v)&&x.v>=0&&x.v<=200000);
+  if(!nums.length)return null;
+  const tag=s.search(/LIFESTYLE-STEPS/i);if(tag>=0){const after=nums.find(x=>x.i>tag);if(after)return after.v}
+  const word=s.search(/\bsteps?\b/i);if(word>=0){const before=nums.filter(x=>x.end<=word).pop();if(before)return before.v}
+  return nums.length===1?nums[0].v:Math.max(...nums.map(x=>x.v));
 }
 function stepTarget(name){const m=name.toLowerCase().replace(/(\d),(\d)/g,"$1$2").match(/(\d+(?:\.\d+)?)\s*(k)?\s*steps/);return m?Number(m[1])*(m[2]?1000:1):null}
 function applySteps(n){
@@ -482,12 +491,21 @@ function renderStepSync(){
   if(document.activeElement!==$("shortcutName"))$("shortcutName").value=state.shortcutName||"";
 }
 const showStepBanner=()=>$("stepBanner").classList.remove("hidden"),hideStepBanner=()=>$("stepBanner").classList.add("hidden");
-function syncPending(set){try{if(set===undefined){const v=sessionStorage.getItem("stepSyncPending");sessionStorage.removeItem("stepSyncPending");return!!v}sessionStorage.setItem("stepSyncPending","1")}catch(e){return false}}
+// Kept in localStorage with a timestamp: iOS may reload the app while Shortcuts runs, which would wipe sessionStorage.
+function syncPending(set){try{
+  if(set){localStorage.setItem("lifestyle_step_pending",String(Date.now()));return true}
+  const v=Number(localStorage.getItem("lifestyle_step_pending"));localStorage.removeItem("lifestyle_step_pending");
+  return v>0&&Date.now()-v<15*60*1000;
+}catch(e){return false}}
 async function importSteps(){
   hideStepBanner();
-  let txt="";try{txt=await navigator.clipboard.readText()}catch(e){toast("Couldn't read the clipboard. Allow pasting and try again.");return}
+  let txt="";try{txt=await navigator.clipboard.readText()}catch(e){toast("Couldn't read the clipboard. Tap Allow Paste when your iPhone asks, then try again.",6000);return}
   const n=parseStepText(txt);
-  if(n===null){toast(`No step count found. Run the "${shortcutName()}" shortcut first.`);return}
+  if(n===null){
+    const t=txt.trim();
+    toast(t?`Clipboard has "${t.length>40?t.slice(0,40)+"…":t}", which has no step count. Check the shortcut's Text action.`:`Clipboard is empty. Make sure "${shortcutName()}" ends with Copy to Clipboard.`,8000);
+    return;
+  }
   applySteps(n);
 }
 function readStepHash(){
@@ -562,7 +580,8 @@ $("shortcutName").addEventListener("change",()=>{state.shortcutName=$("shortcutN
 $("importSteps").addEventListener("click",importSteps);
 $("stepBannerBtn").addEventListener("click",importSteps);
 $("stepBannerClose").addEventListener("click",hideStepBanner);
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&syncPending())showStepBanner()});
+const checkStepReturn=()=>{if(!document.hidden&&syncPending())showStepBanner()};
+document.addEventListener("visibilitychange",checkStepReturn);window.addEventListener("pageshow",checkStepReturn);window.addEventListener("focus",checkStepReturn);
 window.addEventListener("hashchange",readStepHash);
 
 updateTimer();render();readStepHash();if(syncPending())showStepBanner();
