@@ -390,11 +390,47 @@ function removeGoal(id){
   if(isDone(id)){state.log[today()]=doneOn(today()).filter(x=>x!==id);state.xp=Math.max(0,state.xp-g.xp)}
   g.archived=true;render();toast("Goal removed.");
 }
+// Guess difficulty from the wording: time, amounts, early wake-ups, limits and tell-tale phrases. 1 easy, 2 medium, 3 hard.
+const HARD_RE=/\b(no (social media|sugar|junk|phone|youtube|tiktok|reels|shorts|complaining|caffeine|alcohol)\b|whole day|all day|entire day|cold (shower|plunge|water)|fasting|marathon|inbox to zero|interview|apply|publish|pitch|scares|spend 0|finish one chapter|90 days)/;
+const EASY_RE=/\b(text|call|message|voice note|thank|compliment|smile|make my bed|drink|stretch|grateful|gratitude|breath|breathing|note|hug|set out|name one|notice|listen to music|nap|say yes)\b/;
+const MEDIUM_RE=/(work ?out|\brun\b|study|practi[sc]e|revis|research|build|cook|plan|meditat|journal|read|learn|write|clean|organi[sz]e|declutter|walk|swim|bike|yoga|volunteer|project|apologi|someone new|meetup|event|track|review|teach|save)/;
+function estimateDifficulty(text){
+  const t=" "+text.toLowerCase().replace(/(\d),(\d)/g,"$1$2")+" ",n=parseFloat;let lvl=0,rest=t;
+  const bump=x=>{lvl=Math.max(lvl,x)};
+  const lim=t.match(/(?:less than|under|max(?:imum)?|at most|no more than)\s+(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|minutes?|mins?)\b/);
+  if(lim){const h=/^h/.test(lim[2])?n(lim[1]):n(lim[1])/60;bump(h<=1?3:h<=2?2:1);rest=t.replace(lim[0]," ")}
+  let mins=0;
+  for(const m of rest.matchAll(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/g))mins+=n(m[1])*60;
+  for(const m of rest.matchAll(/(\d+(?:\.\d+)?)\s*(?:minutes?|mins?)\b/g))mins+=n(m[1]);
+  if(/\b(an|one) hour\b/.test(rest))mins+=60;if(/half an hour/.test(rest))mins+=30;
+  // Sleep hours are rest, not effort.
+  if(mins&&!/\bsleep\b/.test(rest))bump(mins>=90?3:mins>=30?2:1);
+  const amt=(re,med,hard,scale=1)=>{const m=rest.match(re);if(m){const v=n(m[1])*(m[2]?scale:1);bump(v>=hard?3:v>=med?2:1)}};
+  amt(/(\d+)\s*pages?/,15,40);
+  amt(/(\d+)\s*(?:push-?ups?|squats?|sit-?ups?|burpees?|pull-?ups?|lunges?|reps?|crunches)/,40,100);
+  amt(/(\d+(?:\.\d+)?)\s*(k)?\s*steps/,8000,15000,1000);
+  amt(/(\d+(?:\.\d+)?)\s*(?:km|kilomet)/,2,5);
+  amt(/(\d+(?:\.\d+)?)\s*(miles?)/,2,5,1.6);
+  amt(/(\d+(?:\.\d+)?)\s*(?:litres?|liters?|l)\b/,2,4);
+  amt(/(\d+)\s*words/,300,1000);
+  const wake=rest.match(/(?:wake|wake up|up|out of bed|rise)\D{0,15}?(?:at|before|by)\s*(\d{1,2})(?::(\d\d))?/);
+  if(wake){const h=n(wake[1])+(wake[2]?n(wake[2])/60:0);bump(h<6?3:h<7.5?2:1)}
+  if(HARD_RE.test(t))bump(3);
+  if(lvl)return lvl;
+  return EASY_RE.test(t)?1:MEDIUM_RE.test(t)?2:2;
+}
+const DIFF=["","Easy","Medium","Hard"],xpForDiff=d=>d*10;
+let diffManual=false;
+function autoDifficulty(){
+  if(diffManual)return;
+  const v=$("goalInput").value.trim();
+  $("goalXP").value=String(xpForDiff(v?estimateDifficulty(v):1));
+}
 function openGoal(category){
   $("goalModal").classList.remove("hidden");
   $("goalCategory").innerHTML=CATS.map(c=>`<option value="${c}">${CATEGORIES[c].icon} ${CATEGORIES[c].name}</option>`).join("");
   if(category)$("goalCategory").value=category;
-  $("goalInput").value="";$("goalXP").value="10";$("ideaList").classList.add("hidden");$("goalInput").focus();
+  $("goalInput").value="";$("goalXP").value="10";diffManual=false;$("diffMode").textContent="· auto";$("ideaList").classList.add("hidden");$("goalInput").focus();
 }
 function closeGoal(){$("goalModal").classList.add("hidden")}
 function addGoal(){
@@ -411,10 +447,10 @@ function showIdeas(fresh=false){
   let pool=CATEGORIES[c].ideas.filter(x=>!have.has(x.toLowerCase())&&!ideaSeen.has(x));
   if(pool.length<4){ideaSeen=new Set(el.querySelectorAll("[data-idea]").length?[...el.querySelectorAll("[data-idea]")].map(b=>b.dataset.idea):[]);pool=CATEGORIES[c].ideas.filter(x=>!have.has(x.toLowerCase())&&!ideaSeen.has(x))}
   const pick=pool.sort(()=>Math.random()-.5).slice(0,4);pick.forEach(x=>ideaSeen.add(x));
-  el.innerHTML=`<div class="idea-head"><span class="label">IDEAS FOR ${CATEGORIES[c].name.toUpperCase()}</span><button type="button" class="idea-refresh">↻ New ideas</button></div>`+(pick.length?pick.map(x=>`<button type="button" data-idea="${esc(x)}">${esc(x)}<span>＋</span></button>`).join(""):'<div class="empty">You already have every idea for this area. Write your own!</div>');
+  el.innerHTML=`<div class="idea-head"><span class="label">IDEAS FOR ${CATEGORIES[c].name.toUpperCase()}</span><button type="button" class="idea-refresh">↻ New ideas</button></div>`+(pick.length?pick.map(x=>{const d=estimateDifficulty(x);return`<button type="button" data-idea="${esc(x)}">${esc(x)}<span class="idea-diff d${d}">${DIFF[d]} +${xpForDiff(d)}</span></button>`}).join(""):'<div class="empty">You already have every idea for this area. Write your own!</div>');
   el.classList.remove("hidden");
   el.querySelector(".idea-refresh").addEventListener("click",()=>showIdeas());
-  el.querySelectorAll("[data-idea]").forEach(b=>b.addEventListener("click",()=>{$("goalInput").value=b.dataset.idea;el.classList.add("hidden")}));
+  el.querySelectorAll("[data-idea]").forEach(b=>b.addEventListener("click",()=>{$("goalInput").value=b.dataset.idea;autoDifficulty();el.classList.add("hidden")}));
 }
 function toast(s){const e=$("toast");e.textContent=s;clearTimeout(toast.t);toast.t=setTimeout(()=>e.textContent="",2200)}
 function nav(page){
@@ -436,6 +472,8 @@ $("manageGoals").addEventListener("click",()=>nav("goals"));
 $("addGoalBtn").addEventListener("click",()=>openGoal());$("addGoalBtn2").addEventListener("click",()=>openGoal());
 $("closeGoal").addEventListener("click",closeGoal);$("saveGoal").addEventListener("click",addGoal);
 $("goalInput").addEventListener("keydown",e=>{if(e.key==="Enter")addGoal()});
+$("goalInput").addEventListener("input",autoDifficulty);
+$("goalXP").addEventListener("change",()=>{diffManual=true;$("diffMode").textContent="· set by you"});
 $("ideasBtn").addEventListener("click",()=>showIdeas(true));$("goalCategory").addEventListener("change",()=>{if(!$("ideaList").classList.contains("hidden"))showIdeas(true)});
 
 $("newChallenge").addEventListener("click",()=>{
