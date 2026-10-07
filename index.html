@@ -144,11 +144,13 @@
     <section class="panel health-card">
       <div class="section-head"><div><span class="label">APPLE HEALTH</span><h2>Step sync</h2></div><span id="stepSyncStatus" class="pill">Not synced</span></div>
       <p class="muted intro">Bring today's step count in from Apple Health with a one-time iPhone Shortcut. Step goals like "Hit 10,000 steps" tick themselves when you reach them.</p>
+      <label class="field"><span>Your shortcut's name</span><input id="shortcutName" maxlength="60" placeholder="LIFESTYLE Steps" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <p class="tiny shortcut-hint">Type it exactly as it appears on the shortcut's tile in the Shortcuts app, capitals and spaces included.</p>
       <div class="health-actions"><button id="runStepShortcut" class="primary" type="button">Sync steps</button><button id="importSteps" class="ghost" type="button">Import copied steps</button></div>
       <details class="setup-guide">
         <summary>Set up the Shortcut (one time, about 2 minutes)</summary>
         <ol>
-          <li>Open the <b>Shortcuts</b> app, tap <b>＋</b>, and name the new shortcut exactly <b>LIFESTYLE Steps</b>.</li>
+          <li>Open the <b>Shortcuts</b> app, tap <b>＋</b>, and name the new shortcut <b>LIFESTYLE Steps</b>. If you name it something else, type that name in the box above. To rename it later, open the shortcut and tap its name at the top.</li>
           <li>Add <b>Find Health Samples</b>. Set the type to <b>Steps</b>, add the filter <b>Start Date is Today</b>, and set <b>Group By</b> to <b>Day</b>.</li>
           <li>Add <b>Calculate Statistics</b> and choose <b>Sum</b>.</li>
           <li>Add <b>Round Number</b> (Ones Place).</li>

@@ -133,3 +133,4 @@
 .setup-guide code{font:600 12px ui-monospace,Menlo,monospace;background:#1c1c22;border:1px solid var(--line);border-radius:6px;padding:1px 5px;overflow-wrap:anywhere}
 .step-banner{position:fixed;left:0;right:0;margin:0 auto;bottom:86px;width:min(520px,calc(100% - 24px));display:flex;align-items:center;gap:8px;padding:10px 10px 10px 16px;border-radius:16px;background:rgba(24,24,30,.96);border:1px solid var(--line-strong);box-shadow:0 14px 40px rgba(0,0,0,.45);z-index:12;animation:rise .35s var(--ease) both}
 .step-banner span{flex:1;font-size:13px;font-weight:700}.step-banner .ghost{min-height:40px;padding:0 12px}.step-banner .primary{min-height:40px}
+.health-card .field{margin-top:10px}.shortcut-hint{margin:6px 0 0}

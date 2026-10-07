@@ -463,7 +463,7 @@ function nav(page){
 
 /* ---------- Apple Health steps (via iOS Shortcut) ---------- */
 // Home-screen web apps can't read Health, so a Shortcut copies "LIFESTYLE-STEPS 8432" (or opens #steps=8432) and we pick it up here.
-const SHORTCUT_NAME="LIFESTYLE Steps";
+const DEFAULT_SHORTCUT="LIFESTYLE Steps",shortcutName=()=>(state.shortcutName||"").trim()||DEFAULT_SHORTCUT;
 function parseStepText(s){
   s=String(s||"");const m=s.match(/LIFESTYLE-STEPS\s*[:=]?\s*([\d.,]+)/i)||s.trim().match(/^([\d.,]+)$/);if(!m)return null;
   const n=Math.round(Number(m[1].replace(/,/g,"")));return Number.isFinite(n)&&n>=0&&n<=200000?n:null;
@@ -479,6 +479,7 @@ function renderStepSync(){
   const at=state.stepSync,el=$("stepSyncStatus");
   el.textContent=at?"Synced "+(ds(new Date(at))===today()?new Date(at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):fmtDate(ds(new Date(at)),{month:"short",day:"numeric"})):"Not synced";
   $("stepUrl").textContent=location.origin+location.pathname+"#steps=";
+  if(document.activeElement!==$("shortcutName"))$("shortcutName").value=state.shortcutName||"";
 }
 const showStepBanner=()=>$("stepBanner").classList.remove("hidden"),hideStepBanner=()=>$("stepBanner").classList.add("hidden");
 function syncPending(set){try{if(set===undefined){const v=sessionStorage.getItem("stepSyncPending");sessionStorage.removeItem("stepSyncPending");return!!v}sessionStorage.setItem("stepSyncPending","1")}catch(e){return false}}
@@ -486,7 +487,7 @@ async function importSteps(){
   hideStepBanner();
   let txt="";try{txt=await navigator.clipboard.readText()}catch(e){toast("Couldn't read the clipboard. Allow pasting and try again.");return}
   const n=parseStepText(txt);
-  if(n===null){toast("No step count found. Run the LIFESTYLE Steps shortcut first.");return}
+  if(n===null){toast(`No step count found. Run the "${shortcutName()}" shortcut first.`);return}
   applySteps(n);
 }
 function readStepHash(){
@@ -556,7 +557,8 @@ setInterval(()=>{if(today()!==lastDay){lastDay=today();mood=null;progWeek=null;r
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&today()!==lastDay){lastDay=today();render()}});
 window.addEventListener("resize",()=>{if($("progress").classList.contains("active"))renderProgress()});
 
-$("runStepShortcut").addEventListener("click",()=>{syncPending(true);location.href="shortcuts://run-shortcut?name="+encodeURIComponent(SHORTCUT_NAME)});
+$("runStepShortcut").addEventListener("click",()=>{syncPending(true);location.href="shortcuts://run-shortcut?name="+encodeURIComponent(shortcutName())});
+$("shortcutName").addEventListener("change",()=>{state.shortcutName=$("shortcutName").value.trim();save();toast("Shortcut name saved: "+shortcutName())});
 $("importSteps").addEventListener("click",importSteps);
 $("stepBannerBtn").addEventListener("click",importSteps);
 $("stepBannerClose").addEventListener("click",hideStepBanner);
