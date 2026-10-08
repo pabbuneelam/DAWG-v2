@@ -160,3 +160,14 @@ button.wk{background:none;border:0;padding:0;font:inherit;cursor:pointer;-webkit
 .switch:focus-visible{outline:2px solid rgba(255,255,255,.5);outline-offset:2px}
 .repeat-toggle span{display:flex;flex-direction:column;gap:2px;font-size:13px}.repeat-toggle small{color:var(--muted);font-size:11px}
 .plan-date{display:block;color:#f0c75e;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.task-row{position:relative;border-radius:14px;overflow:hidden;transition:height .25s var(--ease),margin-top .25s var(--ease),opacity .25s ease}
+.task-row .task{position:relative;z-index:1;touch-action:pan-y;transition:transform .28s var(--ease),box-shadow .25s ease,opacity .25s ease;animation:none}
+.task-row.swiping .task{transition:none}
+.swipe-under{position:absolute;inset:0;display:flex;justify-content:flex-end;align-items:stretch;border-radius:14px;background:linear-gradient(90deg,transparent 30%,#d93a3a 30%)}
+.swipe-del{width:92px;border:0;background:#d93a3a;color:#fff;font-weight:800;font-size:13px;border-radius:0 14px 14px 0;transition:width .2s var(--ease)}
+.task-row.armed .swipe-del{width:100%;border-radius:14px}
+.task-row.removing{opacity:0}
+.swipe-hint{margin:10px 0 0;text-align:center;font-size:11px;color:var(--muted)}
+.undo-bar{position:fixed;left:0;right:0;margin:0 auto;bottom:86px;width:min(520px,calc(100% - 24px));display:flex;align-items:center;gap:10px;padding:10px 10px 10px 16px;border-radius:16px;background:rgba(244,244,245,.97);color:#09090b;box-shadow:0 14px 40px rgba(0,0,0,.45);z-index:21;animation:rise .3s var(--ease) both}
+.undo-bar span{flex:1;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.undo-bar button{border:0;background:#09090b;color:#fff;border-radius:10px;min-height:38px;padding:0 16px;font-weight:800}

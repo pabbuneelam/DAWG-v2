@@ -95,7 +95,8 @@ const doneOn=k=>state.log[k]||[];
 const isDone=id=>doneOn(today()).includes(id);
 // Goals without a date repeat every day; dated goals belong to that one day (planned ahead from Home).
 // Repeating goals added while planning a future day start that day (g.from), so earlier days are unchanged.
-const repeatsOn=(g,k)=>!g.date&&(!g.from||g.from<=k);
+// g.until ends a daily goal after that day (set when it is removed while planning ahead).
+const repeatsOn=(g,k)=>!g.date&&(!g.from||g.from<=k)&&(!g.until||k<=g.until);
 const dailyGoals=()=>active().filter(g=>repeatsOn(g,today()));
 const goalsOn=k=>active().filter(g=>repeatsOn(g,k)||g.date===k);
 const startsLater=g=>!g.date&&g.from>today();
@@ -194,16 +195,63 @@ function renderGoals(){
   if(!list.length){el.innerHTML=`<div class="empty">${future?"Nothing planned yet. Add goals for this day below.":"No goals yet. Tap ＋ to add your first one."}</div>`;return}
   CATS.forEach(c=>list.filter(g=>g.category===c).forEach(g=>{
     const done=!future&&isDone(g.id),row=document.createElement("div");row.className="task-row";
+    row.innerHTML='<div class="swipe-under"><button class="swipe-del" type="button">Delete</button></div>';
     const r=document.createElement("button");
     r.type="button";r.className="task"+(done?" done":"")+(future?" locked":"");r.style.setProperty("--c",CATEGORIES[c].color);
     r.innerHTML=`${hex(CATEGORIES[c].color)}<span class="task-name"></span>${g.date?'<span class="once">once</span>':startsLater(g)?'<span class="once">new daily</span>':""}<span class="xp">+${g.xp}</span><span class="box">${future?"🔒":done?"✓":""}</span>`;
     r.querySelector(".task-name").textContent=g.name;
-    r.addEventListener("click",()=>future?toast(`Locked until ${dayName}. You can check this off then.`):toggle(g.id));
-    row.append(r);
-    if(g.date||startsLater(g)){const x=document.createElement("button");x.type="button";x.className="task-del";x.setAttribute("aria-label","Remove "+g.name);x.textContent="✕";x.addEventListener("click",()=>removeGoal(g.id));row.append(x)}
+    r.addEventListener("click",()=>{
+      if(row.dataset.swiped){delete row.dataset.swiped;return}
+      if(row.classList.contains("open")){closeOpenRow();return}
+      future?toast(`Locked until ${dayName}. You can check this off then.`):toggle(g.id);
+    });
+    row.append(r);attachSwipe(row,()=>removeGoal(g.id,k));
     el.append(row);
   }));
+  if(!state.swipeTipSeen)el.insertAdjacentHTML("beforeend",'<p class="swipe-hint">Tip: swipe a goal left to delete it.</p>');
 }
+// Swipe a goal left to delete it, like clearing a notification: a short swipe reveals Delete, a long one deletes.
+let openRow=null;
+function closeOpenRow(except){
+  if(!openRow||openRow===except)return;
+  openRow.classList.remove("open");openRow.querySelector(".task").style.transform="";openRow=null;
+}
+function collapseRow(row,done){
+  state.swipeTipSeen=true;
+  const card=row.querySelector(".task");
+  row.style.height=row.offsetHeight+"px";row.classList.add("removing");card.style.transform="translateX(-110%)";
+  requestAnimationFrame(()=>{row.style.height="0px";row.style.marginTop="0px"});
+  setTimeout(done,260);
+}
+function attachSwipe(row,onDelete){
+  const card=row.querySelector(".task"),REVEAL=92;
+  let x0=0,y0=0,dx=0,base=0,pid=null,decided=false,tracking=false;
+  card.addEventListener("pointerdown",e=>{if(e.button)return;x0=e.clientX;y0=e.clientY;dx=0;base=row.classList.contains("open")?-REVEAL:0;pid=e.pointerId;decided=false;tracking=true});
+  card.addEventListener("pointermove",e=>{
+    if(!tracking||e.pointerId!==pid)return;
+    const mx=e.clientX-x0,my=e.clientY-y0;
+    if(!decided){
+      if(Math.abs(mx)<8&&Math.abs(my)<8)return;
+      decided=true;
+      if(Math.abs(my)>Math.abs(mx)){tracking=false;return}
+      try{card.setPointerCapture(pid)}catch(err){}
+      closeOpenRow(row);row.classList.add("swiping");
+    }
+    dx=Math.min(0,base+mx);card.style.transform=`translateX(${dx}px)`;
+    row.classList.toggle("armed",dx<-row.offsetWidth*.5);
+  });
+  const end=e=>{
+    if(!tracking||e.pointerId!==pid)return;tracking=false;
+    if(!decided)return;
+    row.classList.remove("swiping","armed");row.dataset.swiped="1";setTimeout(()=>delete row.dataset.swiped,80);
+    if(dx<-row.offsetWidth*.5)collapseRow(row,onDelete);
+    else if(dx<-50){row.classList.add("open");card.style.transform=`translateX(${-REVEAL}px)`;openRow=row}
+    else{row.classList.remove("open");card.style.transform="";if(openRow===row)openRow=null}
+  };
+  card.addEventListener("pointerup",end);card.addEventListener("pointercancel",end);
+  row.querySelector(".swipe-del").addEventListener("click",()=>{openRow=null;collapseRow(row,onDelete)});
+}
+document.addEventListener("pointerdown",e=>{if(openRow&&!openRow.contains(e.target))closeOpenRow()});
 function renderHomeChallenge(){
   const d=dailyFor(today()),done=!!state.daily[today()],c=CATEGORIES[d.category];
   $("homeChallenge").style.setProperty("--c",c.color);
@@ -428,10 +476,22 @@ function toggle(id){
   if(!was&&state.history[k]?.completed)toast(`Perfect day. Streak ${streak()} 🔥`);
   render();
 }
-function removeGoal(id){
+function removeGoal(id,k=today()){
   const g=goalById(id);if(!g)return;
+  const snapshot=JSON.stringify(state);
+  // Removing a running daily goal while planning ahead only stops it from that day on.
+  if(k>today()&&!g.date&&!startsLater(g)){
+    g.until=addDays(k,-1);render();
+    showUndo(`"${g.name}" stops after ${fmtDate(g.until,{weekday:"long"})}`,snapshot);return;
+  }
   if(isDone(id)){state.log[today()]=doneOn(today()).filter(x=>x!==id);state.xp=Math.max(0,state.xp-g.xp)}
-  g.archived=true;render();toast("Goal removed.");
+  g.archived=true;render();showUndo(`"${g.name}" deleted`,snapshot);
+}
+let undoTimer=null;
+function showUndo(msg,snapshot){
+  $("undoText").textContent=msg;$("undoBar").classList.remove("hidden");
+  clearTimeout(undoTimer);undoTimer=setTimeout(()=>$("undoBar").classList.add("hidden"),5000);
+  $("undoBtn").onclick=()=>{clearTimeout(undoTimer);$("undoBar").classList.add("hidden");state={...fresh(),...JSON.parse(snapshot)};render();toast("Restored.")};
 }
 // Guess difficulty from the wording: time, amounts, early wake-ups, limits and tell-tale phrases. 1 easy, 2 medium, 3 hard.
 const HARD_RE=/\b(no (social media|sugar|junk|phone|youtube|tiktok|reels|shorts|complaining|caffeine|alcohol)\b|whole day|all day|entire day|cold (shower|plunge|water)|fasting|marathon|inbox to zero|interview|apply|publish|pitch|scares|spend 0|finish one chapter|90 days)/;
