@@ -41,7 +41,8 @@
   </section>
 
   <section class="panel">
-    <div class="section-head"><div><span id="todayLabel" class="label">TODAY</span><h2>Your goals</h2></div><button id="editGoals" class="pill pill-btn" type="button">Edit</button></div>
+    <div class="section-head"><div><span id="todayLabel" class="label">TODAY</span><h2 id="goalsTitle">Your goals</h2></div><div class="day-nav"><button id="prevDay" class="pill pill-btn" type="button" aria-label="Previous day">‹</button><button id="nextDay" class="pill pill-btn" type="button" aria-label="Next day">›</button><button id="editGoals" class="pill pill-btn" type="button">Edit</button></div></div>
+    <p id="planNote" class="plan-note hidden"></p>
     <div id="habitList"></div>
     <button id="addGoalBtn" class="add-goal" type="button">＋ Add a goal</button>
   </section>
@@ -230,6 +231,7 @@
     <label class="field"><span>Area</span><select id="goalCategory"></select></label>
     <label class="field"><span>Your goal</span><input id="goalInput" maxlength="80" placeholder="e.g. Read for 20 minutes" autocomplete="off"></label>
     <div class="field"><span>Difficulty</span><div id="goalDiff" class="diff-display"></div></div>
+    <label class="repeat-toggle"><input id="goalRepeat" type="checkbox"><span><b>Repeat every day</b><small id="repeatHint"></small></span></label>
     <button id="ideasBtn" class="idea-button" type="button">💡 Need ideas?</button>
     <div id="ideaList" class="idea-list hidden"></div>
     <button id="saveGoal" class="primary wide" type="button">Add goal</button>
