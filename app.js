@@ -94,8 +94,11 @@ const goalById=id=>state.goals.find(g=>g.id===id);
 const doneOn=k=>state.log[k]||[];
 const isDone=id=>doneOn(today()).includes(id);
 // Goals without a date repeat every day; dated goals belong to that one day (planned ahead from Home).
-const dailyGoals=()=>active().filter(g=>!g.date);
-const goalsOn=k=>active().filter(g=>!g.date||g.date===k);
+// Repeating goals added while planning a future day start that day (g.from), so earlier days are unchanged.
+const repeatsOn=(g,k)=>!g.date&&(!g.from||g.from<=k);
+const dailyGoals=()=>active().filter(g=>repeatsOn(g,today()));
+const goalsOn=k=>active().filter(g=>repeatsOn(g,k)||g.date===k);
+const startsLater=g=>!g.date&&g.from>today();
 const catGoals=c=>dailyGoals().filter(g=>g.category===c);
 // Home can show a future day for planning; checking off stays locked until that day.
 let viewDay=null;
@@ -171,7 +174,7 @@ function renderWeek(){
   const start=weekStart(),t=today();
   $("weekStrip").innerHTML=Array.from({length:7},(_,i)=>{
     const k=addDays(start,i),h=state.history[k],cls=k===t?"today":k>t?"future":h?.completed?"done":h?.score>0?"partial":"";
-    const sel=k===viewKey()?" selected":"",planned=k>t&&active().some(g=>g.date===k)?" planned":"";
+    const sel=k===viewKey()?" selected":"",planned=k>t&&active().some(g=>g.date===k||g.from===k)?" planned":"";
     const tag=k>=t?"button":"div";
     return `<${tag} class="wk ${cls}${sel}${planned}"${k>=t?` type="button" data-day="${k}" aria-label="${fmtDate(k,{weekday:"long",month:"short",day:"numeric"})}"`:""}><span>${parse(k).toLocaleDateString(undefined,{weekday:"narrow"})}</span><i>${h?.completed?"✓":""}</i></${tag}>`;
   }).join("");
@@ -184,7 +187,7 @@ function renderGoals(){
   $("goalsTitle").textContent=future?(k===addDays(t,1)?"Plan tomorrow":"Plan "+dayName):"Your goals";
   $("prevDay").disabled=!future;$("nextDay").disabled=daysBetween(t,k)>=MAX_PLAN_DAYS;
   $("planNote").classList.toggle("hidden",!future);
-  $("planNote").textContent=future?`🔒 You can check these off on ${dayName}. Goals you add here are just for that day.`:"";
+  $("planNote").textContent=future?`🔒 You can check these off on ${dayName}. Anything you add here starts that day and won't change earlier days.`:"";
   $("addGoalBtn").textContent=future?"＋ Add a goal for "+fmtDate(k,{weekday:"short",month:"short",day:"numeric"}):"＋ Add a goal";
   el.innerHTML="";
   const list=goalsOn(k);
@@ -193,11 +196,11 @@ function renderGoals(){
     const done=!future&&isDone(g.id),row=document.createElement("div");row.className="task-row";
     const r=document.createElement("button");
     r.type="button";r.className="task"+(done?" done":"")+(future?" locked":"");r.style.setProperty("--c",CATEGORIES[c].color);
-    r.innerHTML=`${hex(CATEGORIES[c].color)}<span class="task-name"></span>${g.date?'<span class="once">once</span>':""}<span class="xp">+${g.xp}</span><span class="box">${future?"🔒":done?"✓":""}</span>`;
+    r.innerHTML=`${hex(CATEGORIES[c].color)}<span class="task-name"></span>${g.date?'<span class="once">once</span>':startsLater(g)?'<span class="once">new daily</span>':""}<span class="xp">+${g.xp}</span><span class="box">${future?"🔒":done?"✓":""}</span>`;
     r.querySelector(".task-name").textContent=g.name;
     r.addEventListener("click",()=>future?toast(`Locked until ${dayName}. You can check this off then.`):toggle(g.id));
     row.append(r);
-    if(g.date){const x=document.createElement("button");x.type="button";x.className="task-del";x.setAttribute("aria-label","Remove "+g.name);x.textContent="✕";x.addEventListener("click",()=>removeGoal(g.id));row.append(x)}
+    if(g.date||startsLater(g)){const x=document.createElement("button");x.type="button";x.className="task-del";x.setAttribute("aria-label","Remove "+g.name);x.textContent="✕";x.addEventListener("click",()=>removeGoal(g.id));row.append(x)}
     el.append(row);
   }));
 }
@@ -221,14 +224,15 @@ function renderManager(){
     const add=document.createElement("button");add.type="button";add.className="setup-add";add.textContent="＋ Add to "+CATEGORIES[c].name;
     add.addEventListener("click",()=>openGoal(c,true));box.append(add);el.append(box);
   });
-  const planned=active().filter(g=>g.date&&g.date>=today()).sort((a,b)=>a.date.localeCompare(b.date));
+  const when=g=>g.date||g.from,planned=active().filter(g=>(g.date&&g.date>=today())||startsLater(g)).sort((a,b)=>when(a).localeCompare(when(b)));
   if(!planned.length)return;
   const box=document.createElement("div");box.className="manager-category";
-  box.innerHTML=`<div class="category-title"><span>🗓 <strong>Planned days</strong></span><span class="count valid">${planned.length} goal${planned.length===1?"":"s"}</span></div><small>One-off goals for a specific day. They unlock on that day.</small>`;
+  box.innerHTML=`<div class="category-title"><span>🗓 <strong>Planned days</strong></span><span class="count valid">${planned.length} goal${planned.length===1?"":"s"}</span></div><small>Goals you planned ahead. One-off goals unlock on their day; new daily goals start repeating from their first day.</small>`;
   planned.forEach(g=>{
     const row=document.createElement("div");row.className="manage-row";
     row.innerHTML=`<div class="manage-goal"><small class="plan-date"></small><span></span></div><span class="xp">+${g.xp} XP</span><button class="delete" type="button">Delete</button>`;
-    row.querySelector(".plan-date").textContent=g.date===today()?"Today":fmtDate(g.date,{weekday:"short",month:"short",day:"numeric"});
+    const d=when(g),day=d===today()?"Today":fmtDate(d,{weekday:"short",month:"short",day:"numeric"});
+    row.querySelector(".plan-date").textContent=g.date?day:"Daily from "+day;
     row.querySelector(".manage-goal span").textContent=g.name;
     row.querySelector(".delete").addEventListener("click",()=>removeGoal(g.id));box.append(row);
   });
@@ -474,15 +478,15 @@ function openGoal(category,repeat){
   if(category)$("goalCategory").value=category;
   $("goalInput").value="";autoDifficulty();$("ideaList").classList.add("hidden");$("goalInput").focus();
 }
-function repeatHint(){const k=viewKey();$("repeatHint").textContent=$("goalRepeat").checked?"Shows up every day":`Only on ${k===today()?"today":fmtDate(k,{weekday:"long",month:"short",day:"numeric"})}`}
+function repeatHint(){const k=viewKey(),day=fmtDate(k,{weekday:"long",month:"short",day:"numeric"});$("repeatHint").textContent=$("goalRepeat").checked?(k===today()?"Shows up every day":"Every day starting "+day):`Only on ${k===today()?"today":day}`}
 function closeGoal(){$("goalModal").classList.add("hidden")}
 function addGoal(){
   const name=$("goalInput").value.trim(),category=$("goalCategory").value;
   if(!name){toast("Enter a goal first.");return}
   const repeat=$("goalRepeat").checked,k=viewKey(),g={id:uid(),name,category,xp:xpForDiff(estimateDifficulty(name))};
-  if(!repeat)g.date=k;
+  if(!repeat)g.date=k;else if(k>today())g.from=k;
   state.goals.push(g);
-  closeGoal();render();toast(repeat?"Goal added to "+CATEGORIES[category].name+".":"Planned for "+(k===today()?"today":fmtDate(k,{weekday:"long"}))+".");
+  closeGoal();render();toast(repeat?(k>today()?"Repeats daily from "+fmtDate(k,{weekday:"long"})+".":"Goal added to "+CATEGORIES[category].name+"."):"Planned for "+(k===today()?"today":fmtDate(k,{weekday:"long"}))+".");
 }
 // Show a few ideas at a time, skipping ones already set as goals; refresh cycles through the rest of the list.
 let ideaSeen=new Set();
