@@ -153,6 +153,10 @@ button.wk{background:none;border:0;padding:0;font:inherit;cursor:pointer;-webkit
 .task.locked{opacity:.75;cursor:default}.task.locked .box{border-style:dashed;font-size:11px}
 .once{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#f0c75e;border:1px solid rgba(240,199,94,.4);border-radius:999px;padding:2px 6px}
 .task-del{flex:0 0 40px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:800}.task-del:hover{color:#ff6b6b;border-color:rgba(255,107,107,.4)}
-.repeat-toggle{display:flex;gap:10px;align-items:flex-start;margin-top:14px;cursor:pointer}.repeat-toggle input{width:20px;height:20px;margin:2px 0 0;accent-color:#f4f4f5;flex:0 0 auto}
+.repeat-toggle{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#0c0c0f;cursor:pointer}
+.switch{appearance:none;-webkit-appearance:none;position:relative;flex:0 0 auto;width:50px;height:30px;margin:0;border-radius:999px;background:#2a2a31;border:1px solid var(--line-strong);cursor:pointer;transition:background .25s ease,border-color .25s ease}
+.switch:before{content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#9a9aa4;box-shadow:0 2px 6px rgba(0,0,0,.4);transition:transform .25s var(--ease),background .25s ease}
+.switch:checked{background:var(--good);border-color:var(--good)}.switch:checked:before{transform:translateX(20px);background:#fff}
+.switch:focus-visible{outline:2px solid rgba(255,255,255,.5);outline-offset:2px}
 .repeat-toggle span{display:flex;flex-direction:column;gap:2px;font-size:13px}.repeat-toggle small{color:var(--muted);font-size:11px}
 .plan-date{display:block;color:#f0c75e;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}

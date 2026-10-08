@@ -468,12 +468,13 @@ function autoDifficulty(){
 function openGoal(category,repeat){
   const k=viewKey(),future=k>today();
   $("goalRepeat").checked=repeat??!future;
-  $("repeatHint").textContent=`Off: only on ${k===today()?"today":fmtDate(k,{weekday:"long",month:"short",day:"numeric"})}`;
+  repeatHint();
   $("goalModal").classList.remove("hidden");
   $("goalCategory").innerHTML=CATS.map(c=>`<option value="${c}">${CATEGORIES[c].icon} ${CATEGORIES[c].name}</option>`).join("");
   if(category)$("goalCategory").value=category;
   $("goalInput").value="";autoDifficulty();$("ideaList").classList.add("hidden");$("goalInput").focus();
 }
+function repeatHint(){const k=viewKey();$("repeatHint").textContent=$("goalRepeat").checked?"Shows up every day":`Only on ${k===today()?"today":fmtDate(k,{weekday:"long",month:"short",day:"numeric"})}`}
 function closeGoal(){$("goalModal").classList.add("hidden")}
 function addGoal(){
   const name=$("goalInput").value.trim(),category=$("goalCategory").value;
@@ -581,6 +582,7 @@ $("topProfile").addEventListener("click",()=>nav("profile"));
 $("editGoals").addEventListener("click",()=>nav("goals"));
 $("manageGoals").addEventListener("click",()=>nav("goals"));
 $("addGoalBtn").addEventListener("click",()=>openGoal());$("addGoalBtn2").addEventListener("click",()=>openGoal(undefined,true));
+$("goalRepeat").addEventListener("change",repeatHint);
 $("prevDay").addEventListener("click",()=>setViewDay(addDays(viewKey(),-1)));
 $("nextDay").addEventListener("click",()=>setViewDay(addDays(viewKey(),1)));
 $("closeGoal").addEventListener("click",closeGoal);$("saveGoal").addEventListener("click",addGoal);
