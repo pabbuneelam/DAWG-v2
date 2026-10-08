@@ -195,38 +195,31 @@ function renderGoals(){
   if(!list.length){el.innerHTML=`<div class="empty">${future?"Nothing planned yet. Add goals for this day below.":"No goals yet. Tap ＋ to add your first one."}</div>`;return}
   CATS.forEach(c=>list.filter(g=>g.category===c).forEach(g=>{
     const done=!future&&isDone(g.id),row=document.createElement("div");row.className="task-row";
-    row.innerHTML='<div class="swipe-under"><button class="swipe-del" type="button">Delete</button></div>';
     const r=document.createElement("button");
     r.type="button";r.className="task"+(done?" done":"")+(future?" locked":"");r.style.setProperty("--c",CATEGORIES[c].color);
     r.innerHTML=`${hex(CATEGORIES[c].color)}<span class="task-name"></span>${g.date?'<span class="once">once</span>':startsLater(g)?'<span class="once">new daily</span>':""}<span class="xp">+${g.xp}</span><span class="box">${future?"🔒":done?"✓":""}</span>`;
     r.querySelector(".task-name").textContent=g.name;
     r.addEventListener("click",()=>{
       if(row.dataset.swiped){delete row.dataset.swiped;return}
-      if(row.classList.contains("open")){closeOpenRow();return}
       future?toast(`Locked until ${dayName}. You can check this off then.`):toggle(g.id);
     });
     row.append(r);attachSwipe(row,()=>removeGoal(g.id,k));
     el.append(row);
   }));
-  if(!state.swipeTipSeen)el.insertAdjacentHTML("beforeend",'<p class="swipe-hint">Tip: swipe a goal left, then tap Delete to remove it.</p>');
+  if(!state.swipeTipSeen)el.insertAdjacentHTML("beforeend",'<p class="swipe-hint">Tip: swipe a goal left to delete it.</p>');
 }
-// Swipe a goal left to reveal a Delete button, like iOS notifications; deleting always takes a tap on that button.
-let openRow=null;
-function closeOpenRow(except){
-  if(!openRow||openRow===except)return;
-  openRow.classList.remove("open");openRow.querySelector(".task").style.transform="";openRow=null;
-}
+// Swipe a goal away to delete it, like clearing a notification: drag it far enough (or flick it) and it slides off.
 function collapseRow(row,done){
   state.swipeTipSeen=true;
   const card=row.querySelector(".task");
-  row.style.height=row.offsetHeight+"px";row.classList.add("removing");card.style.transform="translateX(-110%)";
+  row.style.height=row.offsetHeight+"px";row.classList.add("removing");card.style.transform="translateX(-110%)";card.style.opacity="0";
   requestAnimationFrame(()=>{row.style.height="0px";row.style.marginTop="0px"});
   setTimeout(done,260);
 }
 function attachSwipe(row,onDelete){
-  const card=row.querySelector(".task"),REVEAL=92;
-  let x0=0,y0=0,dx=0,base=0,pid=null,decided=false,tracking=false;
-  card.addEventListener("pointerdown",e=>{if(e.button)return;x0=e.clientX;y0=e.clientY;dx=0;base=row.classList.contains("open")?-REVEAL:0;pid=e.pointerId;decided=false;tracking=true});
+  const card=row.querySelector(".task");
+  let x0=0,y0=0,dx=0,pid=null,decided=false,tracking=false,lastX=0,lastT=0,vel=0;
+  card.addEventListener("pointerdown",e=>{if(e.button)return;x0=lastX=e.clientX;y0=e.clientY;lastT=e.timeStamp;dx=0;vel=0;pid=e.pointerId;decided=false;tracking=true});
   card.addEventListener("pointermove",e=>{
     if(!tracking||e.pointerId!==pid)return;
     const mx=e.clientX-x0,my=e.clientY-y0;
@@ -235,23 +228,21 @@ function attachSwipe(row,onDelete){
       decided=true;
       if(Math.abs(my)>Math.abs(mx)){tracking=false;return}
       try{card.setPointerCapture(pid)}catch(err){}
-      closeOpenRow(row);row.classList.add("swiping");
+      row.classList.add("swiping");
     }
-    const raw=Math.min(0,base+mx);
-    dx=raw<-REVEAL?-REVEAL+(raw+REVEAL)*.25:raw; // rubber-band past the button
-    card.style.transform=`translateX(${dx}px)`;
+    const dt=e.timeStamp-lastT;if(dt>0)vel=(e.clientX-lastX)/dt;lastX=e.clientX;lastT=e.timeStamp;
+    dx=Math.min(0,mx);
+    card.style.transform=`translateX(${dx}px)`;card.style.opacity=String(Math.max(.25,1+dx/row.offsetWidth));
   });
   const end=e=>{
     if(!tracking||e.pointerId!==pid)return;tracking=false;
     if(!decided)return;
     row.classList.remove("swiping");row.dataset.swiped="1";setTimeout(()=>delete row.dataset.swiped,80);
-    if(dx<-40){row.classList.add("open");card.style.transform=`translateX(${-REVEAL}px)`;openRow=row}
-    else{row.classList.remove("open");card.style.transform="";if(openRow===row)openRow=null}
+    if(dx<-row.offsetWidth*.35||(dx<-40&&vel<-.6))collapseRow(row,onDelete);
+    else{card.style.transform="";card.style.opacity=""}
   };
   card.addEventListener("pointerup",end);card.addEventListener("pointercancel",end);
-  row.querySelector(".swipe-del").addEventListener("click",()=>{openRow=null;collapseRow(row,onDelete)});
 }
-document.addEventListener("pointerdown",e=>{if(openRow&&!openRow.contains(e.target))closeOpenRow()});
 function renderHomeChallenge(){
   const d=dailyFor(today()),done=!!state.daily[today()],c=CATEGORIES[d.category];
   $("homeChallenge").style.setProperty("--c",c.color);
