@@ -208,9 +208,9 @@ function renderGoals(){
     row.append(r);attachSwipe(row,()=>removeGoal(g.id,k));
     el.append(row);
   }));
-  if(!state.swipeTipSeen)el.insertAdjacentHTML("beforeend",'<p class="swipe-hint">Tip: swipe a goal left to delete it.</p>');
+  if(!state.swipeTipSeen)el.insertAdjacentHTML("beforeend",'<p class="swipe-hint">Tip: swipe a goal left, then tap Delete to remove it.</p>');
 }
-// Swipe a goal left to delete it, like clearing a notification: a short swipe reveals Delete, a long one deletes.
+// Swipe a goal left to reveal a Delete button, like iOS notifications; deleting always takes a tap on that button.
 let openRow=null;
 function closeOpenRow(except){
   if(!openRow||openRow===except)return;
@@ -237,15 +237,15 @@ function attachSwipe(row,onDelete){
       try{card.setPointerCapture(pid)}catch(err){}
       closeOpenRow(row);row.classList.add("swiping");
     }
-    dx=Math.min(0,base+mx);card.style.transform=`translateX(${dx}px)`;
-    row.classList.toggle("armed",dx<-row.offsetWidth*.5);
+    const raw=Math.min(0,base+mx);
+    dx=raw<-REVEAL?-REVEAL+(raw+REVEAL)*.25:raw; // rubber-band past the button
+    card.style.transform=`translateX(${dx}px)`;
   });
   const end=e=>{
     if(!tracking||e.pointerId!==pid)return;tracking=false;
     if(!decided)return;
-    row.classList.remove("swiping","armed");row.dataset.swiped="1";setTimeout(()=>delete row.dataset.swiped,80);
-    if(dx<-row.offsetWidth*.5)collapseRow(row,onDelete);
-    else if(dx<-50){row.classList.add("open");card.style.transform=`translateX(${-REVEAL}px)`;openRow=row}
+    row.classList.remove("swiping");row.dataset.swiped="1";setTimeout(()=>delete row.dataset.swiped,80);
+    if(dx<-40){row.classList.add("open");card.style.transform=`translateX(${-REVEAL}px)`;openRow=row}
     else{row.classList.remove("open");card.style.transform="";if(openRow===row)openRow=null}
   };
   card.addEventListener("pointerup",end);card.addEventListener("pointercancel",end);
