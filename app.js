@@ -195,7 +195,7 @@ function renderGoals(){
   if(!list.length){el.innerHTML=`<div class="empty">${future?"Nothing planned yet. Add goals for this day below.":"No goals yet. Tap ＋ to add your first one."}</div>`;return}
   CATS.forEach(c=>list.filter(g=>g.category===c).forEach(g=>{
     const done=!future&&isDone(g.id),row=document.createElement("div");row.className="task-row";
-    row.innerHTML='<div class="swipe-cue" aria-hidden="true"><span>🗑</span></div>';
+    row.innerHTML='<div class="swipe-cue" aria-hidden="true"></div>';
     const r=document.createElement("button");
     r.type="button";r.className="task"+(done?" done":"")+(future?" locked":"");r.style.setProperty("--c",CATEGORIES[c].color);
     r.innerHTML=`${hex(CATEGORIES[c].color)}<span class="task-name"></span>${g.date?'<span class="once">once</span>':startsLater(g)?'<span class="once">new daily</span>':""}<span class="xp">+${g.xp}</span><span class="box">${future?"🔒":done?"✓":""}</span>`;
