@@ -163,9 +163,15 @@ button.wk{background:none;border:0;padding:0;font:inherit;cursor:pointer;-webkit
 .task-row{position:relative;border-radius:14px;overflow:hidden;transition:height .25s var(--ease),margin-top .25s var(--ease),opacity .25s ease}
 .task-row .task{position:relative;z-index:1;touch-action:pan-y;transition:transform .28s var(--ease),box-shadow .25s ease,opacity .25s ease;animation:none}
 .task-row.swiping .task{transition:none}
-.task-row.removing{opacity:0}
 .swipe-hint{margin:10px 0 0;text-align:center;font-size:11px;color:var(--muted)}
 .undo-bar{position:fixed;left:0;right:0;margin:0 auto;bottom:86px;width:min(520px,calc(100% - 24px));display:flex;align-items:center;gap:10px;padding:10px 10px 10px 16px;border-radius:16px;background:rgba(244,244,245,.97);color:#09090b;box-shadow:0 14px 40px rgba(0,0,0,.45);z-index:21;animation:rise .3s var(--ease) both}
 .undo-bar span{flex:1;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .undo-bar button{border:0;background:#09090b;color:#fff;border-radius:10px;min-height:38px;padding:0 16px;font-weight:800}
 .task{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.task-row .task{will-change:transform}
+.task-row.removing{pointer-events:none}
+.swipe-cue{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;padding-right:22px;border-radius:14px;background:linear-gradient(90deg,transparent 35%,rgba(217,58,58,.22));opacity:0;transition:background .2s ease}
+.swipe-cue span{font-size:18px;transition:transform .25s cubic-bezier(.34,1.56,.64,1),filter .2s ease;filter:grayscale(.6)}
+.task-row.armed .swipe-cue{background:linear-gradient(90deg,transparent 20%,rgba(217,58,58,.55))}
+.task-row.armed .swipe-cue span{transform:scale(1.35);filter:none}
+@media(prefers-reduced-motion:reduce){.task-row .task{transition:none!important}}

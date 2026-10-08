@@ -195,6 +195,7 @@ function renderGoals(){
   if(!list.length){el.innerHTML=`<div class="empty">${future?"Nothing planned yet. Add goals for this day below.":"No goals yet. Tap ＋ to add your first one."}</div>`;return}
   CATS.forEach(c=>list.filter(g=>g.category===c).forEach(g=>{
     const done=!future&&isDone(g.id),row=document.createElement("div");row.className="task-row";
+    row.innerHTML='<div class="swipe-cue" aria-hidden="true"><span>🗑</span></div>';
     const r=document.createElement("button");
     r.type="button";r.className="task"+(done?" done":"")+(future?" locked":"");r.style.setProperty("--c",CATEGORIES[c].color);
     r.innerHTML=`${hex(CATEGORIES[c].color)}<span class="task-name"></span>${g.date?'<span class="once">once</span>':startsLater(g)?'<span class="once">new daily</span>':""}<span class="xp">+${g.xp}</span><span class="box">${future?"🔒":done?"✓":""}</span>`;
@@ -208,18 +209,31 @@ function renderGoals(){
   }));
   if(!state.swipeTipSeen)el.insertAdjacentHTML("beforeend",'<p class="swipe-hint">Tip: swipe a goal left to delete it.</p>');
 }
-// Swipe a goal away to delete it, like clearing a notification: drag it far enough (or flick it) and it slides off.
-function collapseRow(row,done){
+// Swipe a goal away to delete it, like clearing a notification: drag it far enough (or flick it) and it flies off.
+const SNAP_BACK="transform .42s cubic-bezier(.34,1.56,.64,1),opacity .3s ease";
+const EASE_OUT="cubic-bezier(.22,1,.36,1)";
+function collapseRow(row,done,vel=0){
   state.swipeTipSeen=true;
-  const card=row.querySelector(".task");
-  row.style.height=row.offsetHeight+"px";row.classList.add("removing");card.style.transform="translateX(-110%)";card.style.opacity="0";
-  requestAnimationFrame(()=>{row.style.height="0px";row.style.marginTop="0px"});
-  setTimeout(done,260);
+  const card=row.querySelector(".task"),cs=getComputedStyle(card),w=row.offsetWidth;
+  const from=new DOMMatrixReadOnly(cs.transform==="none"?undefined:cs.transform).m41;
+  // Faster flicks fly off faster; a plain drag-and-release takes about a quarter second.
+  const dur=Math.round(Math.max(170,Math.min(320,(w+from)/Math.max(1.4,Math.abs(vel)))));
+  row.classList.add("removing");card.style.transition="none";
+  card.animate([{transform:`translateX(${from}px)`,opacity:cs.opacity},{transform:`translateX(${-w-60}px) scale(.92)`,opacity:0}],{duration:dur,easing:EASE_OUT,fill:"forwards"})
+    .finished
+    .then(()=>row.animate([{height:row.offsetHeight+"px",marginTop:getComputedStyle(row).marginTop,opacity:1},{height:"0px",marginTop:"0px",opacity:0}],{duration:260,easing:EASE_OUT,fill:"forwards"}).finished)
+    .then(done,done);
 }
 function attachSwipe(row,onDelete){
-  const card=row.querySelector(".task");
-  let x0=0,y0=0,dx=0,pid=null,decided=false,tracking=false,lastX=0,lastT=0,vel=0;
-  card.addEventListener("pointerdown",e=>{if(e.button)return;x0=lastX=e.clientX;y0=e.clientY;lastT=e.timeStamp;dx=0;vel=0;pid=e.pointerId;decided=false;tracking=true});
+  const card=row.querySelector(".task"),cue=row.querySelector(".swipe-cue");
+  let x0=0,y0=0,dx=0,pid=null,decided=false,tracking=false,lastX=0,lastT=0,vel=0,raf=0,armed=false;
+  const paint=()=>{
+    raf=0;const w=row.offsetWidth,p=Math.min(1,-dx/(w*.35));
+    card.style.transform=`translateX(${dx}px)`;card.style.opacity=String(1-Math.max(0,Math.min(.55,-dx/w*.7)));
+    cue.style.opacity=String(Math.max(0,p));
+    const now=p>=1;if(now!==armed){armed=now;row.classList.toggle("armed",now);if(now)navigator.vibrate?.(8)}
+  };
+  card.addEventListener("pointerdown",e=>{if(e.button||row.classList.contains("removing"))return;x0=lastX=e.clientX;y0=e.clientY;lastT=e.timeStamp;dx=0;vel=0;pid=e.pointerId;decided=false;tracking=true});
   card.addEventListener("pointermove",e=>{
     if(!tracking||e.pointerId!==pid)return;
     const mx=e.clientX-x0,my=e.clientY-y0;
@@ -228,18 +242,20 @@ function attachSwipe(row,onDelete){
       decided=true;
       if(Math.abs(my)>Math.abs(mx)){tracking=false;return}
       try{card.setPointerCapture(pid)}catch(err){}
-      row.classList.add("swiping");
+      card.style.transition="none";row.classList.add("swiping");
     }
-    const dt=e.timeStamp-lastT;if(dt>0)vel=(e.clientX-lastX)/dt;lastX=e.clientX;lastT=e.timeStamp;
-    dx=Math.min(0,mx);
-    card.style.transform=`translateX(${dx}px)`;card.style.opacity=String(Math.max(.25,1+dx/row.offsetWidth));
+    const dt=e.timeStamp-lastT;if(dt>0)vel=vel*.6+((e.clientX-lastX)/dt)*.4;lastX=e.clientX;lastT=e.timeStamp;
+    dx=mx>0?mx*.12:mx; // pulling right only stretches a little
+    if(!raf)raf=requestAnimationFrame(paint);
   });
   const end=e=>{
     if(!tracking||e.pointerId!==pid)return;tracking=false;
     if(!decided)return;
+    cancelAnimationFrame(raf);raf=0;
     row.classList.remove("swiping");row.dataset.swiped="1";setTimeout(()=>delete row.dataset.swiped,80);
-    if(dx<-row.offsetWidth*.35||(dx<-40&&vel<-.6))collapseRow(row,onDelete);
-    else{card.style.transform="";card.style.opacity=""}
+    if(dx<-row.offsetWidth*.35||(dx<-30&&vel<-.5)){paint();collapseRow(row,onDelete,vel);return}
+    card.style.transition=SNAP_BACK;card.style.transform="";card.style.opacity="";
+    cue.style.opacity="0";armed=false;row.classList.remove("armed");
   };
   card.addEventListener("pointerup",end);card.addEventListener("pointercancel",end);
 }
