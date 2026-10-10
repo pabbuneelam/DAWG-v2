@@ -95,8 +95,8 @@ const doneOn=k=>state.log[k]||[];
 const isDone=id=>doneOn(today()).includes(id);
 // Goals without a date repeat every day; dated goals belong to that one day (planned ahead from Home).
 // Repeating goals added while planning a future day start that day (g.from), so earlier days are unchanged.
-// g.until ends a daily goal after that day (set when it is removed while planning ahead).
-const repeatsOn=(g,k)=>!g.date&&(!g.from||g.from<=k)&&(!g.until||k<=g.until);
+// g.skip lists days a daily goal was removed from while planning ahead; g.until (older data) ends it after a day.
+const repeatsOn=(g,k)=>!g.date&&(!g.from||g.from<=k)&&(!g.until||k<=g.until)&&!(g.skip||[]).includes(k);
 const dailyGoals=()=>active().filter(g=>repeatsOn(g,today()));
 const goalsOn=k=>active().filter(g=>repeatsOn(g,k)||g.date===k);
 const startsLater=g=>!g.date&&g.from>today();
@@ -253,7 +253,8 @@ function attachSwipe(row,onDelete){
     if(!decided)return;
     cancelAnimationFrame(raf);raf=0;
     row.classList.remove("swiping");row.dataset.swiped="1";setTimeout(()=>delete row.dataset.swiped,80);
-    if(dx<-row.offsetWidth*.35||(dx<-30&&vel<-.5)){paint();collapseRow(row,onDelete,vel);return}
+    // A cancelled gesture (e.g. the browser took over to scroll) never deletes.
+    if(e.type!=="pointercancel"&&(dx<-row.offsetWidth*.35||(dx<-30&&vel<-.5))){paint();collapseRow(row,onDelete,vel);return}
     card.style.transition=SNAP_BACK;card.style.transform="";card.style.opacity="";
     cue.style.opacity="0";armed=false;row.classList.remove("armed");
   };
@@ -486,10 +487,10 @@ function toggle(id){
 function removeGoal(id,k=today()){
   const g=goalById(id);if(!g)return;
   const snapshot=JSON.stringify(state);
-  // Removing a running daily goal while planning ahead only stops it from that day on.
-  if(k>today()&&!g.date&&!startsLater(g)){
-    g.until=addDays(k,-1);render();
-    showUndo(`"${g.name}" stops after ${fmtDate(g.until,{weekday:"long"})}`,snapshot);return;
+  // Removing a daily goal while planning a future day skips just that day; every other day keeps it.
+  if(k>today()&&!g.date){
+    g.skip=[...new Set([...(g.skip||[]),k])].filter(d=>d>=today());render();
+    showUndo(`"${g.name}" removed from ${fmtDate(k,{weekday:"long"})} only`,snapshot);return;
   }
   if(isDone(id)){state.log[today()]=doneOn(today()).filter(x=>x!==id);state.xp=Math.max(0,state.xp-g.xp)}
   g.archived=true;render();showUndo(`"${g.name}" deleted`,snapshot);
