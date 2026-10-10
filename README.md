@@ -35,4 +35,4 @@ GitHub Pages is a simple free option:
 4. Open the generated HTTPS URL in Safari and add it to your Home Screen.
 
 ## Note
-This version stores data in the browser/device. It does not have accounts or cloud sync yet.
+This version stores data in the browser/device. It now has accounts and cloud sync user are able to store their own data locally and open their own data across devices of their choosing on local host.
